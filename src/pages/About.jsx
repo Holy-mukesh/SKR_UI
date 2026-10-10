@@ -64,7 +64,7 @@ function Legacy() {
 
   useGSAP(() => {
     if (reduceMotion) return;
-    gsap.from('.legacy__entry, .legacy__motto', {
+    gsap.from('.legacy__lead, .legacy__entry, .legacy__motto', {
       opacity: 0, y: 30, duration: 1.3, stagger: 0.14, ease: 'expo.out',
       scrollTrigger: { trigger: ref.current, start: 'top 75%' }
     });
@@ -78,6 +78,13 @@ function Legacy() {
       </div>
 
       <div className="legacy__body">
+        <p className="legacy__lead">
+          Established in 1995, SKR Sivabhagya represents a distinguished legacy of hospitality, seamlessly blending
+          timeless tradition with modern comfort. With a presence in Madurai and Kodaikanal, we offer thoughtfully
+          curated stays defined by elegance, convenience, and exceptional value. Rooted in a commitment to gracious
+          service and guest satisfaction, SKR Sivabhagya continues to create memorable experiences where comfort meets
+          refined hospitality.
+        </p>
         {CHAPTERS.map(c => (
           <article className="legacy__entry" key={c.year}>
             <p className="legacy__meta">

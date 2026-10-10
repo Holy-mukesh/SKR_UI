@@ -9,7 +9,6 @@ function StageLayer({ blurred = false }) {
   return (
     <div className={`stage__layer${blurred ? ' stage__layer--blur' : ''}`} aria-hidden={blurred || undefined}>
       <div className="hero__glow" aria-hidden="true" />
-      <div className="hero__beams" aria-hidden="true"><span /><span /><span /></div>
 
       <div className="hero__inner">
         <div className="hero__mark">

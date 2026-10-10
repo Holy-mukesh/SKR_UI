@@ -317,16 +317,6 @@ main { position: relative; z-index: 2; pointer-events: none; }
   background: radial-gradient(circle, rgba(212, 166, 74, 0.2) 0%, rgba(138, 100, 32, 0.08) 35%, transparent 65%);
   pointer-events: none;
 }
-.hero__beams span {
-  position: absolute;
-  top: 0;
-  width: 1px;
-  height: 100%;
-  background: linear-gradient(to bottom, transparent, rgba(212, 166, 74, 0.18) 40%, transparent);
-}
-.hero__beams span:nth-child(1) { left: 18%; }
-.hero__beams span:nth-child(2) { left: 50%; opacity: 0.4; }
-.hero__beams span:nth-child(3) { left: 82%; }
 
 .hero__inner {
   position: relative;
@@ -368,21 +358,33 @@ main { position: relative; z-index: 2; pointer-events: none; }
 .hero__title {
   margin-top: clamp(18px, 3vh, 34px);
   display: flex;
-  flex-direction: column;
-  align-items: center;
+  justify-content: center;
+  align-items: baseline;
   font-weight: 400;
 }
+/* SKR and SIVABHAGYA share one size and one line, so they read as a single name */
+.hero__title {
+  --word: clamp(20px, 5vw, 78px);
+  gap: 0.3em; /* the letter-spacing already adds air around each word */
+  font-size: var(--word);
+  white-space: nowrap;
+}
 .hero__pre {
-  font-family: var(--sans);
-  font-size: 11px;
-  letter-spacing: 0.9em;
-  padding-left: 0.9em;
-  color: var(--gold);
+  font-family: var(--caps);
+  font-size: var(--word);
+  letter-spacing: 0.24em;
+  padding-left: 0.24em;
+  line-height: 1;
+  background: var(--gold-grad);
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }
 .hero__name {
-  margin-top: 12px;
+  margin-top: 0;
   font-family: var(--caps);
-  font-size: clamp(30px, 6.4vw, 92px);
+  font-size: var(--word);
   letter-spacing: 0.24em;
   padding-left: 0.24em;
   line-height: 1;
@@ -1723,8 +1725,16 @@ main { position: relative; z-index: 2; pointer-events: none; }
   border-top: 1px solid rgba(212, 166, 74, 0.35);
 }
 .legacy__head .display { font-size: clamp(40px, 5vw, 80px); }
+.legacy__lead {
+  padding-bottom: 30px;
+  border-bottom: 1px solid var(--line);
+  font-family: var(--serif);
+  font-weight: 300;
+  font-size: clamp(20px, 1.7vw, 25px);
+  line-height: 1.6;
+  color: rgba(239, 230, 210, 0.9);
+}
 .legacy__entry { padding: 28px 0 30px; border-bottom: 1px solid var(--line); }
-.legacy__entry:first-child { padding-top: 6px; }
 .legacy__meta { display: flex; align-items: baseline; gap: 18px; margin-bottom: 14px; }
 .legacy__year { font-family: var(--serif); font-size: 34px; line-height: 1; color: var(--gold-light); }
 .legacy__place { font-size: 10px; letter-spacing: 0.34em; text-transform: uppercase; color: var(--gold); }
