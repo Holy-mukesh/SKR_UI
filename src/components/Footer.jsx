@@ -29,7 +29,7 @@ export default function Footer() {
 
       <div className="footer__cols">
         <div><h4><SiteLink to={placePath('kodaikanal')}>Kodaikanal</SiteLink></h4><p>Adventure Resort<br />Kodaikanal, Tamil Nadu</p></div>
-        <div><h4><SiteLink to={placePath('arapalayam')}>Arapalayam</SiteLink></h4><p>47, D.D. Main Road, Arappalayam<br />Madurai 625016</p></div>
+        <div><h4><SiteLink to={placePath('arapalayam')}>Aarapalayam</SiteLink></h4><p>47, D.D. Main Road, Arappalayam<br />Madurai 625016</p></div>
         <div><h4><SiteLink to={placePath('kochadai')}>Kochadai</SiteLink></h4><p>Service Apartments<br />Kochadai, Madurai</p></div>
         <div>
           <h4>Contact</h4>

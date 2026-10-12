@@ -24,8 +24,8 @@ export const venues = [
     area: 'Kodaikanal · Vilpatti',
     type: 'Adventure Resort',
     booking: 'Kodaikanal',
-    cover: { src: '/assets/gallery/kodaikanal/cover.webp', wide: '/assets/gallery/kodaikanal/cover-wide.webp', alt: 'Aerial view of the Kodaikanal resort on a wooded hilltop, with the Palani Hills and clouds beyond' },
-    desc: 'High in the Palani Hills at Vilpatti, the resort looks out over eucalyptus forest and drifting mist. Rooms open to the valley, the dining hall frames the mountains, and the lawns invite slow, cool mornings.',
+    cover: { src: '/assets/gallery/kodaikanal/cover.webp', wide: '/assets/gallery/kodaikanal/cover-wide.webp', alt: 'Aerial view of the Kodaikanal resort on a wooded hilltop, with the Kodaikanal Hills and clouds beyond' },
+    desc: 'SKR SIVABHAGYA, nestled atop a hill in Villpatti, Kodaikanal, offers breathtaking 360° panoramic views. Just a 15-minute drive from Kodaikanal Lake, it promises an exceptional mountain retreat. Experience world-class comfort in our elegant rooms and luxurious suites. Watch the mist embrace the hills as the skies feel beautifully within reach. Reconnect with nature through scenic treks across nearby valleys and hilltops. Begin your day with a wholesome breakfast at our restaurant. End it with a specially curated menu featuring delightful local favourites.',
     stats: [['10', 'Rooms'], ['G + 2', 'Floors'], ['₹6,000', 'Rooms from']],
     facts: [
       ['Setting', 'Hillside at Vilpatti, with panoramic valley views'],
@@ -54,11 +54,11 @@ export const venues = [
   {
     id: 'arapalayam',
     num: 'II',
-    name: 'Arapalayam',
-    area: 'Madurai · Arapalayam',
+    name: 'Aarapalayam',
+    area: 'Madurai · Aarapalayam',
     type: 'Business Class Hotel',
-    booking: 'Madurai — Arapalayam',
-    cover: { src: '/assets/gallery/arapalayam/cover.webp', wide: '/assets/gallery/arapalayam/cover-wide.webp', alt: 'Entrance to the restaurant at the Arapalayam hotel, with a brass lamp and chandelier' },
+    booking: 'Madurai — Aarapalayam',
+    cover: { src: '/assets/gallery/arapalayam/cover.webp', wide: '/assets/gallery/arapalayam/cover-wide.webp', alt: 'Entrance to the restaurant at the Aarapalayam hotel, with a brass lamp and chandelier' },
     desc: 'In the heart of the temple city, minutes from the Meenakshi Amman Temple — a business class hotel of dark wood, warm light and quiet rooms, made for rest after a long day.',
     stats: [['40', 'Rooms'], ['G + 4', 'Floors'], ['₹1,900', 'Rooms from']],
     facts: [

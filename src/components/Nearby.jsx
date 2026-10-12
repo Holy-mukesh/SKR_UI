@@ -23,7 +23,7 @@ const TOWNS = [
     tag: 'Around the temple city',
     photo: byId('arapalayam').cover.wide,
     spots: [
-      ['Meenakshi Amman Temple', 'Towering painted gopurams — 5 km from Arapalayam'],
+      ['Meenakshi Amman Temple', 'Towering painted gopurams — 5 km from Aarapalayam'],
       ['Thirumalai Nayakkar Mahal', 'A 17th-century palace of great white arches'],
       ['Vandiyur Mariamman Teppakulam', 'The vast temple tank, lit up at festivals'],
       ['Gandhi Memorial Museum', 'A quiet palace of history and gardens']

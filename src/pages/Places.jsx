@@ -30,7 +30,7 @@ export default function Places() {
           tall
           eyebrow="Our Places"
           lines={['Three addresses.', <em>One welcome.</em>]}
-          intro="From the cool of the Palani Hills to the heart of the temple city — choose the stay that suits your journey."
+          intro="From the cool of the Kodaikanal Hills to the heart of the temple city — choose the stay that suits your journey."
           aside={
             <div className="places-stack">
               <Stack

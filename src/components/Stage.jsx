@@ -28,7 +28,7 @@ function StageLayer({ blurred = false }) {
               {[...NAME].map((c, i) => <span className="char" aria-hidden="true" key={i}>{c}</span>)}
             </span>
           </Title>
-          <p className="hero__tag">Kodaikanal <em>&middot;</em> Arapalayam <em>&middot;</em> Kochadai</p>
+          <p className="hero__tag">Kodaikanal <em>&middot;</em> Aarapalayam <em>&middot;</em> Kochadai</p>
         </div>
       </div>
     </div>

@@ -6,7 +6,7 @@ import { gsap, useGSAP, reduceMotion } from '../motion';
   fills with light as you scroll through it; the gold words carry the places.
 */
 const WORDS = [
-  'From', 'the', 'mist', 'of', 'the', ['Palani Hills'], 'to', 'the', 'temple', 'lamps', 'of', ['Madurai'], '—',
+  'From', 'the', 'mist', 'of', 'the', ['Kodaikanal Hills'], 'to', 'the', 'temple', 'lamps', 'of', ['Madurai'], '—',
   'three', 'addresses,', 'and', 'one', 'way', 'of', ['keeping guests.']
 ];
 
