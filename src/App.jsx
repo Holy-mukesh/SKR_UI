@@ -48,6 +48,7 @@ function Site() {
   const busy = useRef(false);
   // The opening intro plays once, and only when the visit starts on the home page
   const introPending = useRef(!reduceMotion && route.pathname === '/');
+  const introPlayed = useRef(introPending.current); // stays true after the intro, unlike introPending
 
   const [introDone, setIntroDone] = useState(!introPending.current);
   const [transitioning, setTransitioning] = useState(false);
@@ -87,6 +88,40 @@ function Site() {
     if (!introDone || transitioning || menuOpen || lightbox) lenis.stop();
     else lenis.start();
   }, [introDone, transitioning, menuOpen, lightbox]);
+
+  /* Once the intro has played, a small scroll down and back up hints that the page scrolls. Once per visit. */
+  const nudged = useRef(false);
+  useEffect(() => {
+    const lenis = lenisRef.current;
+    if (!introDone || !introPlayed.current || nudged.current || !lenis) return;
+    nudged.current = true;
+
+    let cancelled = false;
+    const cancel = () => { cancelled = true; };
+    const opts = { passive: true, once: true };
+    addEventListener('wheel', cancel, opts);
+    addEventListener('touchstart', cancel, opts);
+    addEventListener('keydown', cancel, opts);
+
+    const timer = setTimeout(() => {
+      if (cancelled || lenis.scroll > 0) return; // the visitor is already scrolling
+      const depth = Math.min(160, innerHeight * 0.18);
+      lenis.scrollTo(depth, {
+        duration: 0.9,
+        easing: t => 1 - Math.pow(1 - t, 3),
+        onComplete: () => {
+          if (!cancelled) lenis.scrollTo(0, { duration: 1.1, easing: t => 1 - Math.pow(1 - t, 3) });
+        }
+      });
+    }, 1200);
+
+    return () => {
+      clearTimeout(timer);
+      removeEventListener('wheel', cancel);
+      removeEventListener('touchstart', cancel);
+      removeEventListener('keydown', cancel);
+    };
+  }, [introDone]);
 
   const scrollToTarget = useCallback((target, offset = 0) => {
     const lenis = lenisRef.current;
