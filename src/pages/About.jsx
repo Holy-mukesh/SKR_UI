@@ -46,14 +46,14 @@ const CHAPTERS = [
   {
     year: '1995',
     place: 'Aarapalayam · Madurai',
-    text: <>Established in 1995 by <b>Mr. Sivaji</b> in Aarapalayam, Sivabhagya has grown into a prestigious group, building a legacy of excellence through its hotels, marriage halls, and hospitality ventures.</>,
+    text: <>Founded in Aarapalayam in 1995, Sivabhagya has grown into a respected group with a legacy of excellence across its hotels, marriage halls and hospitality ventures.</>,
     by: 'Mr. Sivaji',
     role: 'Founder, Sivabhagya'
   },
   {
     year: '2021',
     place: 'Kodaikanal',
-    text: <>Continuing this tradition, SKR Sivabhagya Adventure Resort, Kodaikanal, was established in 2021 by <b>Mr. Karthikeyan</b>, Founder and Managing Director (SKR Sivabhagya), bringing together luxury, nature, and adventure to create exceptional guest experiences.</>,
+    text: <>Carrying this tradition forward, SKR Sivabhagya Adventure Resort opened in Kodaikanal in 2021, bringing together luxury, nature and adventure to create exceptional guest experiences.</>,
     by: 'Mr. Karthikeyan',
     role: 'Founder & Managing Director, SKR Sivabhagya'
   }
