@@ -7,7 +7,9 @@ const maps = q => `https://www.google.com/maps/search/?api=1&query=${encodeURICo
   - stats:   three headline figures shown under the description
   - facts:   the details list beside the map
   - floors:  how the building is laid out (optional)
-  - cover:   tall photo for the place boxes (src) and a wide one for landscape boxes (wide)
+  - cover:   tall photo for the place boxes (src) and a wide one for landscape boxes (wide);
+             optional home: a different wide photo for the home page carousel only
+             (homeWhole: true shows it uncropped, with a blurred copy filling the space around it)
   - rooms:   room types and rates (id is used by bookings; sleeps = guests per room)
   - inventory: how many rooms of each type are on each floor. The booking form and the
              availability calendar are built from this, so keep it in step with the real building.
@@ -24,7 +26,7 @@ export const venues = [
     area: 'Kodaikanal · Vilpatti',
     type: 'Adventure Resort',
     booking: 'Kodaikanal',
-    cover: { src: '/assets/gallery/kodaikanal/cover.webp', wide: '/assets/gallery/kodaikanal/cover-wide.webp', alt: 'Aerial view of the Kodaikanal resort on a wooded hilltop, with the Kodaikanal Hills and clouds beyond' },
+    cover: { src: '/assets/gallery/kodaikanal/cover.webp', wide: '/assets/gallery/kodaikanal/cover-wide.webp', home: '/assets/gallery/kodaikanal/home-wide.webp', homeWhole: true, alt: 'Aerial view of the Kodaikanal resort on a wooded hilltop, with the Kodaikanal Hills and clouds beyond' },
     desc: 'SKR SIVABHAGYA, nestled atop a hill in Villpatti, Kodaikanal, offers breathtaking 360° panoramic views. Just a 15-minute drive from Kodaikanal Lake, it promises an exceptional mountain retreat. Experience world-class comfort in our elegant rooms and luxurious suites. Watch the mist embrace the hills as the skies feel beautifully within reach. Reconnect with nature through scenic treks across nearby valleys and hilltops. Begin your day with a wholesome breakfast at our restaurant. End it with a specially curated menu featuring delightful local favourites.',
     stats: [['10', 'Rooms'], ['G + 2', 'Floors'], ['₹6,000', 'Rooms from']],
     facts: [
@@ -58,7 +60,7 @@ export const venues = [
     area: 'Madurai · Aarapalayam',
     type: 'Business Class Hotel',
     booking: 'Madurai — Aarapalayam',
-    cover: { src: '/assets/gallery/arapalayam/cover.webp', wide: '/assets/gallery/arapalayam/cover-wide.webp', alt: 'Entrance to the restaurant at the Aarapalayam hotel, with a brass lamp and chandelier' },
+    cover: { src: '/assets/gallery/arapalayam/cover.webp', wide: '/assets/gallery/arapalayam/cover-wide.webp', home: '/assets/gallery/arapalayam/home-wide.webp', alt: 'Entrance to the restaurant at the Aarapalayam hotel, with a brass lamp and chandelier' },
     desc: 'In the heart of the temple city, minutes from the Meenakshi Amman Temple — a business class hotel of dark wood, warm light and quiet rooms, made for rest after a long day.',
     stats: [['40', 'Rooms'], ['G + 4', 'Floors'], ['₹1,900', 'Rooms from']],
     facts: [

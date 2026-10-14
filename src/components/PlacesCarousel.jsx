@@ -70,8 +70,14 @@ export default function PlacesCarousel() {
 
   const card = (v, role) => (
     <article className={`pcar__card pcar__card--${role}`} aria-hidden={role === 'out' || undefined} key={`${role}-${v.id}`}>
-      <SiteLink to={placePath(v.id)} className="pcar__media" tabIndex={-1} aria-hidden="true">
-        <img src={v.cover.wide} alt="" />
+      <SiteLink
+        to={placePath(v.id)}
+        className={`pcar__media${v.cover.homeWhole ? ' pcar__media--whole' : ''}`}
+        style={v.cover.homeWhole ? { '--photo': `url(${v.cover.home})` } : undefined}
+        tabIndex={-1}
+        aria-hidden="true"
+      >
+        <img src={v.cover.home ?? v.cover.wide} alt="" />
       </SiteLink>
       <div className="pcar__body">
         <span className="pcar__type">{v.num} · {v.type}</span>
@@ -101,7 +107,7 @@ export default function PlacesCarousel() {
         {venues.map((p, i) => (
           <img
             key={p.id}
-            src={p.cover.wide}
+            src={p.cover.home ?? p.cover.wide}
             alt=""
             loading="lazy"
             className={i === active ? 'is-on' : leaving?.index === i ? 'is-out' : ''}

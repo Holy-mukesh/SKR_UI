@@ -696,6 +696,15 @@ main { position: relative; z-index: 2; pointer-events: none; }
   object-fit: cover;
   display: block;
 }
+/* the whole photo, uncropped, over a blurred copy of itself that fills the rest of the box */
+.pcar__media--whole::before {
+  content: "";
+  position: absolute;
+  inset: -20px;
+  background: var(--photo) center / cover no-repeat;
+  filter: blur(18px) brightness(0.75);
+}
+.pcar__media--whole img { position: relative; object-fit: contain; }
 .pcar__body {
   display: flex;
   flex-direction: column;
