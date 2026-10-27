@@ -4,6 +4,7 @@ import { api } from '../lib/api';
 import { venues, rupees } from '../data/venues';
 import { addDays, findUnit, freeByNight, nightsBetween, unitKey } from '../lib/stay';
 import { Stars } from '../components/Stars';
+import RoomLayout from './RoomLayout';
 import './admin.css';
 
 /*
@@ -170,6 +171,12 @@ function Dashboard({ user, onSignedOut }) {
     }
   };
 
+  const bookRoom = async bookingData => {
+    const saved = await api('/admin/bookings', { method: 'POST', body: bookingData });
+    setBookings(list => [saved, ...list]);
+    return saved;
+  };
+
   const fresh = bookings?.filter(b => b.status === 'new').length ?? 0;
   const ready = reviews && bookings && blocks;
 
@@ -183,6 +190,7 @@ function Dashboard({ user, onSignedOut }) {
         <nav className="adm-tabs" aria-label="Dashboard sections">
           <NavLink to="/admin" end>Overview</NavLink>
           <NavLink to="/admin/bookings">Bookings{fresh > 0 && <b className="adm-badge">{fresh}</b>}</NavLink>
+          <NavLink to="/admin/room-layout">Room Layout</NavLink>
           <NavLink to="/admin/availability">Availability</NavLink>
           <NavLink to="/admin/reviews">Reviews</NavLink>
         </nav>
@@ -201,6 +209,7 @@ function Dashboard({ user, onSignedOut }) {
           <Routes>
             <Route index element={<Overview reviews={reviews} bookings={bookings} />} />
             <Route path="bookings" element={<Bookings bookings={bookings} onStatus={setStatus} onDelete={deleteBooking} />} />
+            <Route path="room-layout" element={<RoomLayout bookings={bookings} blocks={blocks} onBookRoom={bookRoom} />} />
             <Route path="availability" element={<Availability bookings={bookings} blocks={blocks} onAdd={addBlock} onDelete={deleteBlock} onError={guard} />} />
             <Route path="reviews" element={<Reviews reviews={reviews} onDelete={deleteReview} />} />
             <Route path="*" element={<Navigate to="/admin" replace />} />
@@ -272,7 +281,7 @@ function Overview({ reviews, bookings }) {
                 <li key={r.id}>
                   <div>
                     <Stars value={r.rating} />
-                    <p className="adm-quote">“{r.text}”</p>
+                    <p className="adm-quote">"{r.text}"</p>
                     <div className="adm-muted">{r.name} · {placeName(r.place)} · {day(r.date)}</div>
                   </div>
                 </li>
@@ -303,7 +312,7 @@ function Bookings({ bookings, onStatus, onDelete }) {
 
   const exportCsv = () => {
     const cols = ['Received', 'Name', 'Phone', 'Email', 'Location', 'Floor', 'Room', 'Rooms', 'Arrival', 'Departure', 'Nights', 'Guests', 'Estimate (₹)', 'Status', 'Note'];
-    const cell = v => `"${String(v ?? '').replace(/"/g, '""')}"`;
+    const cell = v => `\"${String(v ?? '').replace(/\"/g, '\"\"')}\"`;
     const rows = shown.map(b => [b.createdAt, b.name, b.phone, b.email, b.location, b.floorName, b.roomName, b.rooms, b.arrival, b.departure, nights(b), b.guests, b.estimate?.total, b.status, b.note]);
     const csv = '﻿' + [cols, ...rows].map(r => r.map(cell).join(',')).join('\r\n');
     const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
@@ -576,7 +585,7 @@ function Reviews({ reviews, onDelete }) {
                 <Stars value={r.rating} />
                 <span className="adm-muted">{stamp(r.date)}</span>
               </div>
-              <p className="adm-quote">“{r.text}”</p>
+              <p className="adm-quote">"{r.text}"</p>
               <div className="adm-review__foot">
                 <span><strong>{r.name}</strong> · {placeName(r.place)}</span>
                 <button className="adm-btn adm-btn--danger" onClick={() => onDelete(r)}>Delete</button>
