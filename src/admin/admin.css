@@ -1,13 +1,6 @@
 /* Admin dashboard (/admin) — White & Gold theme, built for reading and quick actions */
 
-.adm {
-  min-height: 100vh;
-  background: #FFFFFF;
-  color: #1A1A1A;
-  font-family: var(--sans);
-  font-size: 15px;
-  line-height: 1.5;
-  
+:root {
   /* White & Gold Theme Variables */
   --bg-primary: #FFFFFF;
   --bg-secondary: #FEFDFB;
@@ -29,7 +22,16 @@
   --room-maintenance: #FFF3E0;
 }
 
-.adm--center { display: grid; place-items: center; padding: 24px 16px; }
+.adm {
+  min-height: 100vh;
+  background: #FFFFFF !important;
+  color: #1A1A1A;
+  font-family: var(--sans);
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.adm--center { display: grid; place-items: center; padding: 24px 16px; background: #FFFFFF; }
 .adm a { color: var(--gold-dark); }
 .adm a:hover { text-decoration: underline; }
 .adm .stars .star { width: 15px; height: 15px; }
@@ -75,7 +77,7 @@
 .adm-field span { font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--gold-dark); font-weight: 500; }
 .adm input,
 .adm select {
-  background: var(--bg-primary);
+  background: #FFFFFF;
   border: 1px solid var(--border-light);
   border-radius: 4px;
   padding: 10px 12px;
@@ -86,7 +88,7 @@
 .adm input:focus,
 .adm select:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(212, 166, 74, 0.1); }
 .adm select { cursor: pointer; }
-.adm select option { background: var(--bg-primary); }
+.adm select option { background: #FFFFFF; color: var(--text-primary); }
 
 .adm-error {
   padding: 10px 14px;
@@ -164,7 +166,16 @@
 .adm-top__end { display: flex; gap: 8px; margin-left: auto; flex-wrap: wrap; }
 
 /* the site sets main { pointer-events: none } for its scroll stage; the dashboard needs clicks */
-.adm-main { pointer-events: auto; max-width: 1240px; margin: 0 auto; padding: 28px clamp(16px, 3vw, 32px) 64px; display: flex; flex-direction: column; gap: 20px; }
+.adm-main { 
+  pointer-events: auto; 
+  max-width: 1240px; 
+  margin: 0 auto; 
+  padding: 28px clamp(16px, 3vw, 32px) 64px; 
+  display: flex; 
+  flex-direction: column; 
+  gap: 20px; 
+  background: #FFFFFF;
+}
 .adm-h1 { font-family: var(--serif); font-weight: 400; font-size: 34px; line-height: 1.1; color: var(--text-primary); }
 .adm-h1 .adm-muted { font-size: 20px; }
 .adm-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
@@ -250,7 +261,7 @@
   background: var(--bg-secondary);
   border-bottom: 1px solid var(--border-light);
 }
-.adm-table td { padding: 14px; vertical-align: top; border-bottom: 1px solid var(--border-light); }
+.adm-table td { padding: 14px; vertical-align: top; border-bottom: 1px solid var(--border-light); color: var(--text-primary); }
 .adm-table tr:last-child td { border-bottom: 0; }
 .adm-table tr.is-new td:first-child { box-shadow: inset 3px 0 0 var(--gold); }
 .adm-table td > div { margin-top: 2px; overflow-wrap: anywhere; }
@@ -270,7 +281,7 @@
 .adm-review__top,
 .adm-review__foot { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
 .adm-review .adm-quote { flex: 1; margin: 10px 0 14px; }
-.adm-review__foot { font-size: 14px; }
+.adm-review__foot { font-size: 14px; color: var(--text-primary); }
 
 @media (max-width: 900px) {
   .adm-stats { grid-template-columns: 1fr 1fr; }
@@ -287,8 +298,8 @@
 /* Availability */
 .adm-avail-nav { display: flex; gap: 6px; }
 .adm-avail { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-bottom: 12px; }
-.adm-avail__dow { font-size: 11px; text-align: center; opacity: 0.6; }
-.adm-avail__day { display: grid; place-items: center; gap: 2px; padding: 6px 0; border-radius: 4px; font-size: 13px; }
+.adm-avail__dow { font-size: 11px; text-align: center; opacity: 0.6; color: var(--text-secondary); }
+.adm-avail__day { display: grid; place-items: center; gap: 2px; padding: 6px 0; border-radius: 4px; font-size: 13px; color: var(--text-primary); }
 .adm-avail__day small { font-size: 10px; opacity: 0.75; }
 .adm-avail__day.is-free { background: rgba(110, 180, 120, 0.16); }
 .adm-avail__day.is-some { background: rgba(212, 166, 74, 0.22); }
@@ -299,6 +310,7 @@
 /* ---------- Room Layout Styles ---------- */
 .room-card {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  color: var(--text-primary);
 }
 
 .room-card:hover {
@@ -307,28 +319,28 @@
 }
 
 .room-card.room-available:hover {
-  border-color: var(--gold);
+  border-color: var(--gold) !important;
   background: rgba(212, 166, 74, 0.05);
 }
 
 .room-card.room-gpay-website {
   background: linear-gradient(135deg, #E3F2FD 0%, #BBDEFB 100%);
-  border-color: #64B5F6;
+  border-color: #64B5F6 !important;
 }
 
 .room-card.room-cash-person {
   background: linear-gradient(135deg, #E8F5E9 0%, #C8E6C9 100%);
-  border-color: #81C784;
+  border-color: #81C784 !important;
 }
 
 .room-card.room-card-website {
   background: linear-gradient(135deg, #FCE4EC 0%, #F8BBD0 100%);
-  border-color: #F06292;
+  border-color: #F06292 !important;
 }
 
 .room-card.room-maintenance {
   background: linear-gradient(135deg, #FFF3E0 0%, #FFE0B2 100%);
-  border-color: #FFB74D;
+  border-color: #FFB74D !important;
   opacity: 0.7;
 }
 
@@ -338,6 +350,8 @@
 .adm input[type="text"],
 .adm input[type="number"] {
   transition: border-color 0.2s, box-shadow 0.2s;
+  background: #FFFFFF;
+  color: var(--text-primary);
 }
 
 .adm input:focus {
