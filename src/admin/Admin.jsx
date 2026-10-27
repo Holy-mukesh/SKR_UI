@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { NavLink, Navigate, Route, Routes } from 'react-router-dom';
+import Link from 'next/link';
+import { usePathname, useRouter } from 'next/navigation';
 import { api } from '../lib/api';
 import { venues, rupees } from '../data/venues';
 import { addDays, findUnit, freeByNight, nightsBetween, unitKey } from '../lib/stay';
@@ -173,18 +174,21 @@ function Dashboard({ user, onSignedOut }) {
   const fresh = bookings?.filter(b => b.status === 'new').length ?? 0;
   const ready = reviews && bookings && blocks;
 
+  const pathname = usePathname();
+  const subpath = pathname?.replace(/^\/admin\/?/, '').split('/')[0] || '';
+
   return (
     <div className="adm">
       <header className="adm-top">
-        <a href="/admin" className="adm-brand">
+        <Link href="/admin" className="adm-brand">
           <img src="/assets/logo-crest-sm.webp" alt="" />
           <span>SKR <i>✦</i> Admin</span>
-        </a>
+        </Link>
         <nav className="adm-tabs" aria-label="Dashboard sections">
-          <NavLink to="/admin" end>Overview</NavLink>
-          <NavLink to="/admin/bookings">Bookings{fresh > 0 && <b className="adm-badge">{fresh}</b>}</NavLink>
-          <NavLink to="/admin/availability">Availability</NavLink>
-          <NavLink to="/admin/reviews">Reviews</NavLink>
+          <Link href="/admin" className={subpath === '' ? 'active' : undefined}>Overview</Link>
+          <Link href="/admin/bookings" className={subpath === 'bookings' ? 'active' : undefined}>Bookings{fresh > 0 && <b className="adm-badge">{fresh}</b>}</Link>
+          <Link href="/admin/availability" className={subpath === 'availability' ? 'active' : undefined}>Availability</Link>
+          <Link href="/admin/reviews" className={subpath === 'reviews' ? 'active' : undefined}>Reviews</Link>
         </nav>
         <div className="adm-top__end">
           <button className="adm-btn" onClick={refresh} disabled={loading}>{loading ? 'Refreshing…' : 'Refresh'}</button>
@@ -198,13 +202,15 @@ function Dashboard({ user, onSignedOut }) {
         {!ready ? (
           !error && <p className="adm-muted">Loading…</p>
         ) : (
-          <Routes>
-            <Route index element={<Overview reviews={reviews} bookings={bookings} />} />
-            <Route path="bookings" element={<Bookings bookings={bookings} onStatus={setStatus} onDelete={deleteBooking} />} />
-            <Route path="availability" element={<Availability bookings={bookings} blocks={blocks} onAdd={addBlock} onDelete={deleteBlock} onError={guard} />} />
-            <Route path="reviews" element={<Reviews reviews={reviews} onDelete={deleteReview} />} />
-            <Route path="*" element={<Navigate to="/admin" replace />} />
-          </Routes>
+          <>
+            {subpath === '' && <Overview reviews={reviews} bookings={bookings} />}
+            {subpath === 'bookings' && <Bookings bookings={bookings} onStatus={setStatus} onDelete={deleteBooking} />}
+            {subpath === 'availability' && <Availability bookings={bookings} blocks={blocks} onAdd={addBlock} onDelete={deleteBlock} onError={guard} />}
+            {subpath === 'reviews' && <Reviews reviews={reviews} onDelete={deleteReview} />}
+            {subpath !== '' && subpath !== 'bookings' && subpath !== 'availability' && subpath !== 'reviews' && (
+              <Overview reviews={reviews} bookings={bookings} />
+            )}
+          </>
         )}
       </main>
     </div>

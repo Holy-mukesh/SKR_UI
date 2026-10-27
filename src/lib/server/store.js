@@ -1,14 +1,18 @@
 import { mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { join, resolve } from 'node:path';
 
 /*
-  A tiny JSON-file database: { reviews: [], bookings: [], blocks: [] } (blocks: dates marked booked in the admin).
-  Everything is kept in memory and written to disk after each change (via a temp file + rename,
-  so a crash mid-write never leaves a half-written file). Fine for a hotel site's volume.
+  Atomic JSON file database: { reviews: [], bookings: [], blocks: [] }.
+  State is maintained and saved atomically to disk.
 */
-export function openStore(dir) {
-  mkdirSync(dir, { recursive: true });
-  const file = join(dir, 'db.json');
+let globalStoreInstance = null;
+
+export function openStore(dir = process.env.DATA_DIR || 'data') {
+  if (globalStoreInstance) return globalStoreInstance;
+
+  const dataDir = join(process.cwd(), 'data');
+  mkdirSync(dataDir, { recursive: true });
+  const file = join(dataDir, 'db.json');
 
   let data = { reviews: [], bookings: [], blocks: [] };
   try {
@@ -51,5 +55,14 @@ export function openStore(dir) {
     }
   });
 
-  return { file, reviews: collection('reviews'), bookings: collection('bookings'), blocks: collection('blocks') };
+  globalStoreInstance = {
+    file,
+    reviews: collection('reviews'),
+    bookings: collection('bookings'),
+    blocks: collection('blocks')
+  };
+
+  return globalStoreInstance;
 }
+
+export const getStore = () => openStore();

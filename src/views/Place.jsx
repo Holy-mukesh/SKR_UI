@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { Navigate, useParams } from 'react-router-dom';
+import { useParams, useRouter } from 'next/navigation';
 import { useSite } from '../site';
 import { venues } from '../data/venues';
 import Page from '../components/Page';
@@ -28,8 +28,17 @@ function PlacePage({ venue }) {
 
 /* /places/:id — keyed by id so moving between places starts each page fresh */
 export default function Place() {
-  const { id } = useParams();
+  const params = useParams();
+  const router = useRouter();
+  const id = params?.id;
   const venue = venues.find(v => v.id === id);
-  if (!venue) return <Navigate to="/places" replace />;
+
+  useEffect(() => {
+    if (!venue) {
+      router.replace('/places');
+    }
+  }, [venue, router]);
+
+  if (!venue) return null;
   return <PlacePage key={venue.id} venue={venue} />;
 }

@@ -1,65 +1,44 @@
-import { lazy, Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { BrowserRouter, Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
+'use client';
+
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { usePathname, useRouter } from 'next/navigation';
 import Lenis from 'lenis';
-import { gsap, ScrollTrigger, reduceMotion } from './motion';
-import { SiteContext } from './site';
-import { venues } from './data/venues';
-import { labelFor } from './data/pages';
+import { gsap, ScrollTrigger, reduceMotion } from '@/motion';
+import { SiteContext } from '@/site';
+import { venues } from '@/data/venues';
+import { labelFor } from '@/data/pages';
 
-import Nav from './components/Nav';
-import Lightbox from './components/Lightbox';
-import WhatsApp from './components/WhatsApp';
-import Home from './pages/Home';
-import About from './pages/About';
-import Places from './pages/Places';
-import Place from './pages/Place';
-import Reviews from './pages/Reviews';
+import Nav from './Nav';
+import Lightbox from './Lightbox';
+import WhatsApp from './WhatsApp';
 
-// Loaded only when someone opens /admin, so visitors never download it
-const Admin = lazy(() => import('./admin/Admin'));
-
-/*
-  Diagonal curtain: its edge runs corner-to-corner and travels from the bottom-right
-  to the top-left. d is how far the edge has travelled (0 → 200, in % of the screen).
-  Both shapes keep a fixed number of points so GSAP can tween between them.
-*/
-// covers the part of the screen where x + y ≥ 200 − d (grows out of the bottom-right corner)
 const sweepIn = d => `polygon(${300 - d}% -100%, 300% -100%, 300% 300%, -100% 300%, -100% ${300 - d}%)`;
-// covers where x + y ≤ 200 − d (shrinks away into the top-left corner)
 const sweepOut = d => `polygon(${300 - d}% -100%, -100% -100%, -100% ${300 - d}%)`;
 
-export default function App() {
-  return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/admin/*" element={<Suspense fallback={null}><Admin /></Suspense>} />
-        <Route path="*" element={<Site />} />
-      </Routes>
-    </BrowserRouter>
-  );
-}
-
-function Site() {
-  const navigate = useNavigate();
-  const route = useLocation();
+export default function SiteShell({ children }) {
+  const router = useRouter();
+  const pathname = usePathname();
 
   const lenisRef = useRef(null);
   const curtainRef = useRef(null);
   const busy = useRef(false);
-  // The opening intro plays once, and only when the visit starts on the home page
-  const introPending = useRef(!reduceMotion && route.pathname === '/');
-  const introPlayed = useRef(introPending.current); // stays true after the intro, unlike introPending
+
+  const introPending = useRef(!reduceMotion && pathname === '/');
+  const introPlayed = useRef(introPending.current);
 
   const [introDone, setIntroDone] = useState(!introPending.current);
   const [transitioning, setTransitioning] = useState(false);
   const [curtainLabel, setCurtainLabel] = useState('');
   const [menuOpen, setMenuOpen] = useState(false);
   const [location, setLocation] = useState(venues[0].booking);
-  const [stay, setStay] = useState({}); // room and dates chosen in the booking form, for the WhatsApp message
-  const [lightbox, setLightbox] = useState(null); // { venueId, index }
+  const [stay, setStay] = useState({});
+  const [lightbox, setLightbox] = useState(null);
 
-  /* Smooth scrolling, driven by GSAP's ticker so ScrollTrigger stays in sync */
+  const isAdminRoute = pathname?.startsWith('/admin');
+
+  /* Smooth scrolling */
   useEffect(() => {
+    if (isAdminRoute) return;
     if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
     if (reduceMotion) return;
 
@@ -70,18 +49,18 @@ function Site() {
     gsap.ticker.add(tick);
     gsap.ticker.lagSmoothing(0);
     lenisRef.current = lenis;
-    if (import.meta.env.DEV) window.lenis = lenis; // handy for debugging in the console
-    addEventListener('load', refresh);
+    if (process.env.NODE_ENV === 'development') window.lenis = lenis;
+    window.addEventListener('load', refresh);
 
     return () => {
-      removeEventListener('load', refresh);
+      window.removeEventListener('load', refresh);
       gsap.ticker.remove(tick);
       lenis.destroy();
       lenisRef.current = null;
     };
-  }, []);
+  }, [isAdminRoute]);
 
-  /* Hold the page still during the intro, page changes and while an overlay is open */
+  /* Hold page still during intro/transition/overlays */
   useEffect(() => {
     const lenis = lenisRef.current;
     if (!lenis) return;
@@ -89,7 +68,7 @@ function Site() {
     else lenis.start();
   }, [introDone, transitioning, menuOpen, lightbox]);
 
-  /* Once the intro has played, a small scroll down and back up hints that the page scrolls. Once per visit. */
+  /* Scroll nudge on first visit to home */
   const nudged = useRef(false);
   useEffect(() => {
     const lenis = lenisRef.current;
@@ -99,13 +78,13 @@ function Site() {
     let cancelled = false;
     const cancel = () => { cancelled = true; };
     const opts = { passive: true, once: true };
-    addEventListener('wheel', cancel, opts);
-    addEventListener('touchstart', cancel, opts);
-    addEventListener('keydown', cancel, opts);
+    window.addEventListener('wheel', cancel, opts);
+    window.addEventListener('touchstart', cancel, opts);
+    window.addEventListener('keydown', cancel, opts);
 
     const timer = setTimeout(() => {
-      if (cancelled || lenis.scroll > 0) return; // the visitor is already scrolling
-      const depth = Math.min(160, innerHeight * 0.18);
+      if (cancelled || lenis.scroll > 0) return;
+      const depth = Math.min(160, window.innerHeight * 0.18);
       lenis.scrollTo(depth, {
         duration: 0.9,
         easing: t => 1 - Math.pow(1 - t, 3),
@@ -117,9 +96,9 @@ function Site() {
 
     return () => {
       clearTimeout(timer);
-      removeEventListener('wheel', cancel);
-      removeEventListener('touchstart', cancel);
-      removeEventListener('keydown', cancel);
+      window.removeEventListener('wheel', cancel);
+      window.removeEventListener('touchstart', cancel);
+      window.removeEventListener('keydown', cancel);
     };
   }, [introDone]);
 
@@ -137,7 +116,7 @@ function Site() {
     else target.scrollIntoView();
   }, []);
 
-  /* Navigate anywhere: same page = glide, other page = curtain transition */
+  /* Navigate with curtain transition */
   const go = useCallback(to => {
     const url = new URL(to, window.location.href);
     setMenuOpen(false);
@@ -151,7 +130,7 @@ function Site() {
 
     const dest = url.pathname + url.hash;
     if (reduceMotion) {
-      navigate(dest);
+      router.push(dest);
       return;
     }
 
@@ -163,25 +142,25 @@ function Site() {
       .set(curtain, { autoAlpha: 1 })
       .fromTo(curtain, { clipPath: sweepIn(0) }, { clipPath: sweepIn(200), duration: 1, ease: 'expo.inOut' })
       .fromTo(curtain.firstChild, { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.6, ease: 'expo.out' }, '-=0.35')
-      .add(() => navigate(dest), '+=0.05');
-  }, [navigate, scrollToTarget]);
+      .add(() => router.push(dest), '+=0.05');
+  }, [router, scrollToTarget]);
 
-  /* After every route change: reset scroll (or land on the #hash), then lift the curtain */
+  /* After route change: lift curtain */
   const firstRoute = useRef(true);
   useLayoutEffect(() => {
-    const target = () => (route.hash && document.querySelector(route.hash)) || 0;
+    const target = () => (window.location.hash && document.querySelector(window.location.hash)) || 0;
 
     if (firstRoute.current) {
       firstRoute.current = false;
       window.scrollTo(0, 0);
-      if (route.hash) requestAnimationFrame(() => jumpTo(target()));
+      if (window.location.hash) requestAnimationFrame(() => jumpTo(target()));
       return;
     }
 
     jumpTo(0);
     ScrollTrigger.refresh();
     jumpTo(target());
-    if (!busy.current) return; // browser back/forward: no curtain to lift
+    if (!busy.current) return;
 
     const curtain = curtainRef.current;
     gsap.timeline({
@@ -195,7 +174,7 @@ function Site() {
     })
       .to(curtain.firstChild, { opacity: 0, y: -24, duration: 0.45, ease: 'power2.in' })
       .fromTo(curtain, { clipPath: sweepOut(0) }, { clipPath: sweepOut(200), duration: 1.1, ease: 'expo.inOut' }, 0.2);
-  }, [route.pathname]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [pathname, jumpTo]);
 
   const site = useMemo(() => ({
     go,
@@ -205,29 +184,30 @@ function Site() {
     stay,
     setStay,
     transitioning,
+    introPending,
+    finishIntro: () => {
+      introPending.current = false;
+      setIntroDone(true);
+    },
     openLightbox: (venueId, index) => setLightbox({ venueId, index })
   }), [go, scrollToTarget, location, stay, transitioning]);
 
-  const finishIntro = useCallback(() => {
-    introPending.current = false;
-    setIntroDone(true);
-  }, []);
-
   const lightboxVenue = lightbox && venues.find(v => v.id === lightbox.venueId);
+
+  if (isAdminRoute) {
+    return (
+      <SiteContext.Provider value={site}>
+        {children}
+      </SiteContext.Provider>
+    );
+  }
 
   return (
     <SiteContext.Provider value={site}>
       <div className="grain" aria-hidden="true" />
       <Nav menuOpen={menuOpen} setMenuOpen={setMenuOpen} />
 
-      <Routes>
-        <Route path="/" element={<Home introPending={introPending} onIntroDone={finishIntro} />} />
-        <Route path="/about" element={<About />} />
-        <Route path="/places" element={<Places />} />
-        <Route path="/places/:id" element={<Place />} />
-        <Route path="/reviews" element={<Reviews />} />
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
+      {children}
 
       <WhatsApp />
 
@@ -238,7 +218,6 @@ function Site() {
         onClose={() => setLightbox(null)}
       />
 
-      {/* Page-change curtain */}
       <div className="curtain" ref={curtainRef} aria-hidden="true">
         <div className="curtain__inner">
           <img src="/assets/logo-crest-sm.webp" alt="" />

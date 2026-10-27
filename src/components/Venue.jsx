@@ -2,10 +2,12 @@ import { useRef } from 'react';
 import { gsap, useGSAP, reduceMotion } from '../motion';
 import { useSite } from '../site';
 import { venues, rupees } from '../data/venues';
+import dynamic from 'next/dynamic';
 import Availability from './Availability';
 import SiteLink from './SiteLink';
 import Gallery from './Gallery';
-import PlaceMap from './PlaceMap';
+
+const PlaceMap = dynamic(() => import('./PlaceMap'), { ssr: false });
 
 /* A place's own page: intro, details beside the map, rooms & rates as cards, then the drifting gallery */
 export default function Venue({ venue }) {

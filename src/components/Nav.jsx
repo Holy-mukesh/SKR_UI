@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { usePathname } from 'next/navigation';
 import { PAGES, isActive, hasReserve } from '../data/pages';
 import SiteLink from './SiteLink';
 
 export default function Nav({ menuOpen, setMenuOpen }) {
-  const { pathname } = useLocation();
+  const pathname = usePathname();
   const [solid, setSolid] = useState(false);
   const [hidden, setHidden] = useState(false);
 
