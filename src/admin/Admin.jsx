@@ -253,7 +253,7 @@ function Overview({ reviews, bookings }) {
         <section className="adm-panel">
           <div className="adm-panel__head">
             <h2>Latest booking requests</h2>
-            <NavLink to="/admin/bookings" className="adm-link">All bookings →</NavLink>
+            <Link href="/admin/bookings" className="adm-link">All bookings →</Link>
           </div>
           {bookings.length ? (
             <ul className="adm-mini">
@@ -273,7 +273,7 @@ function Overview({ reviews, bookings }) {
         <section className="adm-panel">
           <div className="adm-panel__head">
             <h2>Latest reviews</h2>
-            <NavLink to="/admin/reviews" className="adm-link">All reviews →</NavLink>
+            <Link href="/admin/reviews" className="adm-link">All reviews →</Link>
           </div>
           {reviews.length ? (
             <ul className="adm-mini">
