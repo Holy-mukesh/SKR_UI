@@ -1,9 +1,14 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { PAGES, isActive, hasReserve } from '../data/pages';
 import SiteLink from './SiteLink';
 
-export default function Nav({ menuOpen, setMenuOpen }) {
+interface NavProps {
+  menuOpen: boolean;
+  setMenuOpen: (open: boolean) => void;
+}
+
+export default function Nav({ menuOpen, setMenuOpen }: NavProps) {
   const pathname = usePathname();
   const [solid, setSolid] = useState(false);
   const [hidden, setHidden] = useState(false);
@@ -23,7 +28,7 @@ export default function Nav({ menuOpen, setMenuOpen }) {
 
   // The booking form lives on Home and the Places pages; elsewhere, Reserve takes you to Places
   const reserveTo = hasReserve(pathname) ? '#reserve' : '/places#reserve';
-  const links = PAGES.map(({ path, label }) => (
+  const links = PAGES.map(({ path, label }: any) => (
     <SiteLink key={path} to={path} className={isActive(path, pathname) ? 'is-active' : undefined} aria-current={pathname === path ? 'page' : undefined}>
       {label}
     </SiteLink>

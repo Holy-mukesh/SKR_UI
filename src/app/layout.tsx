@@ -1,7 +1,8 @@
+import type { Metadata } from 'next';
 import '@/styles.css';
 import SiteShell from '@/components/SiteShell';
 
-export const metadata = {
+export const metadata: Metadata = {
   title: 'SKR — Sivabhagya | Hotels in Kodaikanal & Madurai',
   description: 'SKR Sivabhagya — an adventure resort in Kodaikanal, a business class hotel in Aarapalayam and service apartments in Kochadai, Madurai.',
   icons: {
@@ -9,7 +10,7 @@ export const metadata = {
   }
 };
 
-export default function RootLayout({ children }) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className="js">
       <head>

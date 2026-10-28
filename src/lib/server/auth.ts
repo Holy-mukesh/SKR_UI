@@ -4,15 +4,22 @@ export const SESSION_COOKIE = 'skr_admin';
 export const SESSION_HOURS = 12;
 
 // In-memory token -> expiry map (persists as long as Next process runs)
-const globalSessions = globalThis.__skrSessions || (globalThis.__skrSessions = new Map());
+const globalSessions: Map<string, number> =
+  (globalThis as any).__skrSessions || ((globalThis as any).__skrSessions = new Map<string, number>());
 
 export const ADMIN_USERNAME = process.env.ADMIN_USERNAME || '';
 export const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || '';
 
-const digest = s => createHash('sha256').update(String(s)).digest();
-export const safeCompare = (a, b) => timingSafeEqual(digest(a), digest(b));
+const digest = (s: string) => createHash('sha256').update(String(s)).digest();
+export const safeCompare = (a: string, b: string) => {
+  try {
+    return timingSafeEqual(digest(a), digest(b));
+  } catch {
+    return false;
+  }
+};
 
-export function verifyAdmin(request) {
+export function verifyAdmin(request: Request): boolean {
   const cookieHeader = request.headers.get('cookie') || '';
   const token = parseCookie(cookieHeader, SESSION_COOKIE);
   if (!token) return false;
@@ -25,14 +32,14 @@ export function verifyAdmin(request) {
   return true;
 }
 
-export function createSessionToken() {
+export function createSessionToken(): string {
   const token = randomBytes(32).toString('hex');
   const expiry = Date.now() + SESSION_HOURS * 3600e3;
   globalSessions.set(token, expiry);
   return token;
 }
 
-export function removeSession(request) {
+export function removeSession(request: Request): void {
   const cookieHeader = request.headers.get('cookie') || '';
   const token = parseCookie(cookieHeader, SESSION_COOKIE);
   if (token) {
@@ -40,7 +47,7 @@ export function removeSession(request) {
   }
 }
 
-function parseCookie(cookieHeader, name) {
+function parseCookie(cookieHeader: string, name: string): string {
   for (const part of cookieHeader.split(';')) {
     const [k, ...v] = part.trim().split('=');
     if (k === name) return decodeURIComponent(v.join('='));
@@ -48,17 +55,23 @@ function parseCookie(cookieHeader, name) {
   return '';
 }
 
-export function getClientIp(request) {
+export function getClientIp(request: Request): string {
   const forwarded = request.headers.get('x-forwarded-for');
   if (forwarded) return forwarded.split(',')[0].trim();
   return request.headers.get('x-real-ip') || '127.0.0.1';
 }
 
+export interface Limiter {
+  check: (ip: string) => void;
+  hit: (ip: string) => void;
+  clear: (ip: string) => void;
+}
+
 /* Sliding-window rate limiter */
-export function createLimiter(max, windowMs) {
-  const hits = new Map();
+export function createLimiter(max: number, windowMs: number): Limiter {
+  const hits = new Map<string, number[]>();
   return {
-    check(ip) {
+    check(ip: string) {
       const now = Date.now();
       if (hits.size > 5000) hits.clear();
       const recent = (hits.get(ip) || []).filter(t => now - t < windowMs);
@@ -67,10 +80,10 @@ export function createLimiter(max, windowMs) {
         throw new Error('Too many attempts. Please try again later.');
       }
     },
-    hit(ip) {
+    hit(ip: string) {
       hits.get(ip)?.push(Date.now()) ?? hits.set(ip, [Date.now()]);
     },
-    clear(ip) {
+    clear(ip: string) {
       hits.delete(ip);
     }
   };

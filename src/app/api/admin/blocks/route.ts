@@ -1,10 +1,10 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { randomUUID } from 'node:crypto';
 import { verifyAdmin } from '@/lib/server/auth';
 import { getStore } from '@/lib/server/store';
 import { parseStay, assertFree, text } from '@/lib/server/validation';
 
-export async function GET(request) {
+export async function GET(request: NextRequest) {
   if (!verifyAdmin(request)) {
     return NextResponse.json({ error: 'Please sign in.' }, { status: 401 });
   }
@@ -12,12 +12,12 @@ export async function GET(request) {
   return NextResponse.json(store.blocks.all());
 }
 
-export async function POST(request) {
+export async function POST(request: NextRequest) {
   if (!verifyAdmin(request)) {
     return NextResponse.json({ error: 'Please sign in.' }, { status: 401 });
   }
 
-  let body;
+  let body: any;
   try {
     body = await request.json();
   } catch {
@@ -34,8 +34,8 @@ export async function POST(request) {
       rooms,
       arrival,
       departure,
-      note: text(body.note, 200),
-      createdAt: new Date().toISOString()
+      reason: text(body.note || body.reason, 200),
+      created: new Date().toISOString()
     };
     assertFree(
       block,
@@ -43,8 +43,8 @@ export async function POST(request) {
       'Not enough free rooms on those dates — confirmed bookings or other blocks already take them.'
     );
     const store = getStore();
-    return NextResponse.json(store.blocks.add(block), { status: 201 });
-  } catch (err) {
+    return NextResponse.json(store.blocks.add(block as any), { status: 201 });
+  } catch (err: any) {
     const status = err.status || 400;
     return NextResponse.json({ error: err.message }, { status });
   }

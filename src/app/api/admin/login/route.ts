@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import {
   ADMIN_USERNAME,
   ADMIN_PASSWORD,
@@ -10,7 +10,7 @@ import {
   SESSION_HOURS
 } from '@/lib/server/auth';
 
-export async function POST(request) {
+export async function POST(request: NextRequest) {
   if (!ADMIN_USERNAME || !ADMIN_PASSWORD) {
     return NextResponse.json(
       { error: 'Admin login is not set up on the server (ADMIN_USERNAME / ADMIN_PASSWORD).' },
@@ -21,11 +21,11 @@ export async function POST(request) {
   const ip = getClientIp(request);
   try {
     loginLimit.check(ip);
-  } catch (err) {
+  } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 429 });
   }
 
-  let body;
+  let body: any;
   try {
     body = await request.json();
   } catch {

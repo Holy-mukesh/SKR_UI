@@ -1,9 +1,9 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { verifyAdmin } from '@/lib/server/auth';
 import { getStore } from '@/lib/server/store';
 import { STATUSES, assertFree } from '@/lib/server/validation';
 
-export async function DELETE(request, { params }) {
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   if (!verifyAdmin(request)) {
     return NextResponse.json({ error: 'Please sign in.' }, { status: 401 });
   }
@@ -15,13 +15,13 @@ export async function DELETE(request, { params }) {
   return new NextResponse(null, { status: 204 });
 }
 
-export async function PATCH(request, { params }) {
+export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   if (!verifyAdmin(request)) {
     return NextResponse.json({ error: 'Please sign in.' }, { status: 401 });
   }
   const { id } = await params;
   const store = getStore();
-  let body;
+  let body: any;
   try {
     body = await request.json();
   } catch {
@@ -45,12 +45,12 @@ export async function PATCH(request, { params }) {
         id,
         'Those rooms are already taken on some of these dates (by another confirmed booking or a block). Free them first, or move this guest.'
       );
-    } catch (err) {
+    } catch (err: any) {
       return NextResponse.json({ error: err.message }, { status: 409 });
     }
   }
 
-  const updated = store.bookings.update(id, { status, updatedAt: new Date().toISOString() });
+  const updated = store.bookings.update(id, { status, updatedAt: new Date().toISOString() } as any);
   if (!updated) {
     return NextResponse.json({ error: 'Booking not found.' }, { status: 404 });
   }

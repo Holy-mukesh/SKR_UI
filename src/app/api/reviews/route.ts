@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { getStore } from '@/lib/server/store';
 import { getClientIp, reviewLimit } from '@/lib/server/auth';
 import { parseReview } from '@/lib/server/validation';
@@ -8,7 +8,7 @@ export async function GET() {
   return NextResponse.json(store.reviews.all());
 }
 
-export async function POST(request) {
+export async function POST(request: NextRequest) {
   try {
     const ip = getClientIp(request);
     reviewLimit.check(ip);
@@ -16,9 +16,9 @@ export async function POST(request) {
     const review = parseReview(body);
     reviewLimit.hit(ip);
     const store = getStore();
-    return NextResponse.json(store.reviews.add(review), { status: 201 });
-  } catch (err) {
-    const status = err.status || (err.message.includes('Too many') ? 429 : 400);
+    return NextResponse.json(store.reviews.add(review as any), { status: 201 });
+  } catch (err: any) {
+    const status = err.status || (err.message?.includes('Too many') ? 429 : 400);
     return NextResponse.json({ error: err.message }, { status });
   }
 }

@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 
 const STAR = 'M12 2.6l2.8 6.1 6.6.7-4.9 4.5 1.4 6.5L12 17.1l-5.9 3.3 1.4-6.5-4.9-4.5 6.6-.7z';
 
-function Star({ fill }) {
+function Star({ fill }: { fill: number }) {
   // fill: 0..1 (allows half stars in averages)
   const id = `s${Math.round(fill * 100)}`;
   return (
@@ -19,7 +19,7 @@ function Star({ fill }) {
 }
 
 /* Read-only stars, e.g. 4.5 */
-export function Stars({ value, label }) {
+export function Stars({ value, label }: { value: number; label?: string }) {
   return (
     <span className="stars" role="img" aria-label={label ?? `${value} out of 5 stars`}>
       {[1, 2, 3, 4, 5].map(n => <Star key={n} fill={Math.max(0, Math.min(1, value - n + 1))} />)}
@@ -28,12 +28,20 @@ export function Stars({ value, label }) {
 }
 
 /* Star picker: a radio group of five, with hover preview and arrow-key support */
-export function StarInput({ value, onChange, invalid }) {
+export function StarInput({
+  value,
+  onChange,
+  invalid
+}: {
+  value: number;
+  onChange: (val: number) => void;
+  invalid?: boolean;
+}) {
   const [hover, setHover] = useState(0);
   const shown = hover || value;
   const words = ['', 'Poor', 'Fair', 'Good', 'Very good', 'Excellent'];
 
-  const onKey = e => {
+  const onKey = (e: React.KeyboardEvent) => {
     if (e.key === 'ArrowRight' || e.key === 'ArrowUp') { e.preventDefault(); onChange(Math.min(5, value + 1)); }
     if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') { e.preventDefault(); onChange(Math.max(1, value - 1)); }
   };

@@ -1,7 +1,7 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { removeSession, SESSION_COOKIE } from '@/lib/server/auth';
 
-export async function POST(request) {
+export async function POST(request: NextRequest) {
   removeSession(request);
   const response = new NextResponse(null, { status: 204 });
   response.cookies.set({
