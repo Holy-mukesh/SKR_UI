@@ -26,8 +26,8 @@ export default function RoomLayout({ bookings = [], blocks = [], onBookSuccess, 
   // Selected floor (defaults to second floor like the reference image)
   const [floorId, setFloorId] = useState<string>('second');
 
-  // Currently selected room number (e.g. 204)
-  const [selectedRoomNumber, setSelectedRoomNumber] = useState<string>('204');
+  // Currently selected room number (null/empty initially so all rooms show in available color)
+  const [selectedRoomNumber, setSelectedRoomNumber] = useState<string>('');
 
   // Booking Form State for Front Desk walk-in
   const [bookingChannel, setBookingChannel] = useState<'in_person' | 'website'>('in_person');
@@ -79,28 +79,18 @@ export default function RoomLayout({ bookings = [], blocks = [], onBookSuccess, 
     return Array.from({ length: totalRoomsOnFloor }, (_, i) => {
       const roomNum = `${prefix + i + 1}`;
       
-      // Determine status from data or realistic preview
+      // Initially all rooms are available unless an active stay or block exists
       let status: 'available' | 'website' | 'inperson' | 'maintenance' = 'available';
-      let sourceText = '';
+      let sourceText = 'AVAILABLE';
 
-      if (roomNum === '202' || roomNum === '205') {
-        status = 'website';
-        sourceText = roomNum === '202' ? 'GPay · Website' : 'Card · Website';
-      } else if (roomNum === '203' || roomNum === '207' || roomNum === '210') {
-        status = 'inperson';
-        sourceText = roomNum === '207' ? 'Cash · In person' : (roomNum === '210' ? 'GPay · In person' : 'Cash · In person');
-      } else if (roomNum === '208') {
-        status = 'maintenance';
-        sourceText = 'Maintenance';
-      }
-
-      // Check if real active stays override
+      // Check if real active confirmed booking exists for this room on selected date
       if (activeStays[i]) {
-        status = 'website';
-        sourceText = `Booked · ${activeStays[i].name?.split(' ')[0] || 'Guest'}`;
+        const isWalkIn = activeStays[i].note?.toLowerCase().includes('in_person') || activeStays[i].note?.toLowerCase().includes('front desk');
+        status = isWalkIn ? 'inperson' : 'website';
+        sourceText = `${isWalkIn ? 'In person' : 'Website'} · ${activeStays[i].name?.split(' ')[0] || 'Guest'}`;
       } else if (activeBlocks[i]) {
         status = 'maintenance';
-        sourceText = 'Blocked';
+        sourceText = activeBlocks[i].reason || 'Maintenance';
       }
 
       return {
@@ -120,14 +110,32 @@ export default function RoomLayout({ bookings = [], blocks = [], onBookSuccess, 
       return acc + floorCount;
     }, 0) || 40;
 
+    // Active bookings and blocks on selected date across the whole place
+    const confirmedStays = bookings.filter(b =>
+      b.place === placeId &&
+      b.status === 'confirmed' &&
+      selectedDate >= b.arrival &&
+      selectedDate < b.departure
+    );
+    const maintenanceBlocks = blocks.filter(k =>
+      k.place === placeId &&
+      selectedDate >= k.arrival &&
+      selectedDate < k.departure
+    );
+
+    const inPersonCount = confirmedStays.filter(b => b.note?.toLowerCase().includes('in_person') || b.note?.toLowerCase().includes('front desk')).length;
+    const websiteCount = confirmedStays.length - inPersonCount;
+    const maintCount = maintenanceBlocks.length;
+    const availableCount = Math.max(0, totalVenueRooms - confirmedStays.length - maintCount);
+
     return {
       total: totalVenueRooms,
-      available: 17,
-      inPerson: 14,
-      website: 8,
-      maintenance: 1
+      available: availableCount,
+      inPerson: inPersonCount,
+      website: websiteCount,
+      maintenance: maintCount
     };
-  }, [venue]);
+  }, [venue, bookings, blocks, placeId, selectedDate]);
 
   // Pricing calculations
   const nights = Math.max(1, nightsBetween(checkIn, checkOut));
@@ -136,14 +144,15 @@ export default function RoomLayout({ bookings = [], blocks = [], onBookSuccess, 
   const gst = Math.round(subtotal * 0.05);
   const total = subtotal + gst;
 
-  // Floor free counts
+  // Floor free counts based on real bookings/blocks
   const getFloorFreeCount = (fId: string) => {
-    if (fId === 'first') return 5;
-    if (fId === 'second') return 3;
-    if (fId === 'third') return 4;
-    if (fId === 'fourth') return 2;
-    if (fId === 'terrace') return 3;
-    return 2;
+    const floorObj = venue.inventory?.find(f => f.id === fId);
+    if (!floorObj) return 0;
+    const counts = Object.values(floorObj.rooms || {}) as number[];
+    const floorTotal = counts.reduce((s: number, c: number) => s + (Number(c) || 0), 0);
+    const taken = bookings.filter(b => b.place === placeId && b.status === 'confirmed' && b.floor === fId && selectedDate >= b.arrival && selectedDate < b.departure).length
+      + blocks.filter(k => k.place === placeId && k.floor === fId && selectedDate >= k.arrival && selectedDate < k.departure).length;
+    return Math.max(0, floorTotal - taken);
   };
 
   // Submit quick walk-in reservation
@@ -375,7 +384,7 @@ export default function RoomLayout({ bookings = [], blocks = [], onBookSuccess, 
 
           <div className="rl-panel__room-head">
             <div>
-              <h3 className="rl-panel__room-num">Room {selectedRoomNumber}</h3>
+              <h3 className="rl-panel__room-num">{selectedRoomNumber ? `Room ${selectedRoomNumber}` : 'Select a room'}</h3>
               <span className="rl-panel__room-sub">{currentRoomType.name} · {currentFloor.name}</span>
             </div>
             <span className="rl-panel__rate">{rupees(ratePerNight)} / night</span>
@@ -508,9 +517,9 @@ export default function RoomLayout({ bookings = [], blocks = [], onBookSuccess, 
           <button
             type="submit"
             className="rl-confirm-btn"
-            disabled={submitting}
+            disabled={submitting || !selectedRoomNumber}
           >
-            {submitting ? 'Confirming…' : `Confirm Booking · Room ${selectedRoomNumber}`}
+            {submitting ? 'Confirming…' : selectedRoomNumber ? `Confirm Booking · Room ${selectedRoomNumber}` : 'Tap a room to book'}
           </button>
         </form>
       </div>
