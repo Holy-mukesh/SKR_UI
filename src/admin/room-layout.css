@@ -1,0 +1,602 @@
+/* =========================================================================
+   ROOM LAYOUT - LUXURY WHITE & GOLD THEME
+   Inspired by PMS Front Desk floor plan with clean gold accents
+   ========================================================================= */
+
+.rl-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  background: #ffffff;
+  border: 1px solid rgba(212, 166, 74, 0.35);
+  border-radius: 12px;
+  padding: 28px 32px;
+  color: #1a1816;
+  box-shadow: 0 10px 30px -10px rgba(212, 166, 74, 0.15), 0 2px 10px rgba(0, 0, 0, 0.04);
+}
+
+/* Header & Controls */
+.rl-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 16px;
+  border-bottom: 1px solid rgba(212, 166, 74, 0.2);
+  padding-bottom: 20px;
+}
+.rl-head__eyebrow {
+  font-size: 11px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: #a37a2c;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+.rl-head__title {
+  font-family: var(--serif);
+  font-size: 34px;
+  font-weight: 400;
+  color: #1a1816;
+  margin: 0;
+  line-height: 1.15;
+}
+.rl-head__title span {
+  font-size: 20px;
+  color: #8c8275;
+  font-style: italic;
+  font-family: var(--serif);
+}
+
+.rl-selectors {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.rl-select-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #fbf9f5;
+  border: 1px solid rgba(212, 166, 74, 0.4);
+  border-radius: 6px;
+  padding: 6px 14px;
+}
+.rl-select-box label {
+  font-size: 11px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: #a37a2c;
+  font-weight: 600;
+}
+.rl-select-box select,
+.rl-select-box input[type="date"] {
+  background: transparent !important;
+  border: none !important;
+  color: #1a1816 !important;
+  font-weight: 500;
+  font-size: 14px;
+  padding: 2px 4px !important;
+  cursor: pointer;
+  outline: none;
+}
+
+/* Metrics Row */
+.rl-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 14px;
+}
+.rl-metric-card {
+  background: #fcfbfa;
+  border: 1px solid rgba(212, 166, 74, 0.25);
+  border-radius: 8px;
+  padding: 14px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.rl-metric-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(212, 166, 74, 0.12);
+  border-color: #d4a64a;
+}
+.rl-metric-card__label {
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #8a7350;
+  font-weight: 600;
+}
+.rl-metric-card__val {
+  font-family: var(--serif);
+  font-size: 38px;
+  line-height: 1;
+  color: #1a1816;
+  font-weight: 500;
+}
+
+/* Main Split View: Floorplan Left + Booking Panel Right */
+.rl-main-split {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 24px;
+  align-items: start;
+}
+@media (max-width: 1040px) {
+  .rl-main-split {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Floor Navigation */
+.rl-floor-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+.rl-floor-info {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+.rl-floor-info h2 {
+  font-family: var(--serif);
+  font-size: 22px;
+  font-weight: 400;
+  color: #1a1816;
+  margin: 0;
+}
+.rl-floor-info span {
+  font-size: 13px;
+  color: #7b7366;
+}
+.rl-floor-pills {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.rl-floor-pill {
+  border: 1px solid rgba(212, 166, 74, 0.35);
+  background: #fbf9f6;
+  color: #3b3630;
+  border-radius: 20px;
+  padding: 5px 14px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.rl-floor-pill:hover {
+  background: #f4ecdc;
+  border-color: #d4a64a;
+}
+.rl-floor-pill.is-active {
+  background: #d4a64a;
+  border-color: #d4a64a;
+  color: #0d0c0a;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(212, 166, 74, 0.3);
+}
+.rl-floor-pill small {
+  opacity: 0.8;
+  font-size: 11px;
+}
+
+/* Interactive Room Canvas */
+.rl-canvas {
+  background: #faf8f5;
+  border: 1px solid rgba(212, 166, 74, 0.3);
+  border-radius: 12px;
+  padding: 24px;
+  position: relative;
+  display: grid;
+  grid-template-columns: 48px 1fr;
+  gap: 16px;
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.02);
+}
+
+.rl-canvas__elevator {
+  border-right: 1px dashed rgba(212, 166, 74, 0.4);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: #9e8255;
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  padding: 12px 0;
+}
+.rl-canvas__elevator-icon {
+  width: 24px;
+  height: 24px;
+  border: 1px solid rgba(212, 166, 74, 0.45);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  transform: rotate(90deg);
+  color: #a37a2c;
+  background: #ffffff;
+}
+
+.rl-hallway {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.rl-rooms-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 14px;
+}
+
+.rl-corridor {
+  text-align: center;
+  position: relative;
+  font-size: 11px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: #a89474;
+  padding: 6px 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+}
+.rl-corridor::before,
+.rl-corridor::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: repeating-linear-gradient(90deg, rgba(212, 166, 74, 0.4) 0, rgba(212, 166, 74, 0.4) 6px, transparent 6px, transparent 12px);
+}
+
+/* Individual Room Box (White & Gold Luxury with subtle state colors) */
+.rl-room {
+  background: #ffffff;
+  border: 1.5px solid rgba(212, 166, 74, 0.35);
+  border-radius: 8px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 104px;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.03);
+}
+.rl-room:hover {
+  transform: translateY(-2px);
+  border-color: #d4a64a;
+  box-shadow: 0 6px 14px rgba(212, 166, 74, 0.2);
+}
+
+/* Keycard Slot Visual at top */
+.rl-room__slot {
+  width: 32px;
+  height: 4px;
+  background: rgba(212, 166, 74, 0.25);
+  border-radius: 2px;
+  margin-bottom: 6px;
+}
+
+.rl-room__top {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+.rl-room__number {
+  font-family: var(--serif);
+  font-size: 24px;
+  font-weight: 500;
+  color: #1a1816;
+  line-height: 1;
+}
+.rl-room__badge {
+  font-size: 10px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.rl-room__status-text {
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: #7b7366;
+  margin-top: 6px;
+}
+
+/* Room States */
+.rl-room--available {
+  border-color: rgba(212, 166, 74, 0.4);
+}
+.rl-room--available .rl-room__status-text {
+  color: #8c7349;
+}
+
+.rl-room--selected {
+  background: #fbf5e6 !important;
+  border-color: #d4a64a !important;
+  box-shadow: 0 0 0 2px rgba(212, 166, 74, 0.4), 0 8px 18px rgba(212, 166, 74, 0.25) !important;
+}
+.rl-room--selected .rl-room__status-text {
+  color: #8f6516;
+  font-weight: 700;
+}
+.rl-room--selected .rl-room__slot {
+  background: #d4a64a;
+}
+
+.rl-room--website {
+  background: #f4f8fd;
+  border-color: #8ab4f8;
+}
+.rl-room--website .rl-room__status-text {
+  color: #1a73e8;
+}
+.rl-room--website .rl-room__badge {
+  background: rgba(26, 115, 232, 0.15);
+  color: #1a73e8;
+}
+
+.rl-room--inperson {
+  background: #f2f9f4;
+  border-color: #81c995;
+}
+.rl-room--inperson .rl-room__status-text {
+  color: #188038;
+}
+.rl-room--inperson .rl-room__badge {
+  background: rgba(24, 128, 56, 0.15);
+  color: #188038;
+}
+
+.rl-room--maintenance {
+  background: repeating-linear-gradient(45deg, #f7f6f5, #f7f6f5 10px, #f0eeee 10px, #f0eeee 20px);
+  border-color: #cfcac4;
+  opacity: 0.85;
+}
+.rl-room--maintenance .rl-room__status-text {
+  color: #8a8279;
+}
+
+/* Legend bar below canvas */
+.rl-legend {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  flex-wrap: wrap;
+  font-size: 11px;
+  color: #7b7366;
+  padding-top: 12px;
+  border-top: 1px solid rgba(212, 166, 74, 0.2);
+}
+.rl-legend__item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.rl-legend__dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  border: 1px solid transparent;
+}
+.rl-legend__dot--available { background: #ffffff; border-color: #d4a64a; }
+.rl-legend__dot--selected { background: #d4a64a; }
+.rl-legend__dot--inperson { background: #e6f4ea; border-color: #81c995; }
+.rl-legend__dot--website { background: #e8f0fe; border-color: #8ab4f8; }
+.rl-legend__dot--maintenance { background: #dedad5; }
+
+/* Right Panel: Walk-In / New Booking Sidebar */
+.rl-panel {
+  background: #ffffff;
+  border: 1px solid rgba(212, 166, 74, 0.35);
+  border-radius: 12px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  box-shadow: 0 4px 16px rgba(212, 166, 74, 0.1);
+}
+.rl-panel__eyebrow {
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #a37a2c;
+  font-weight: 600;
+}
+.rl-panel__room-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  border-bottom: 1px solid rgba(212, 166, 74, 0.25);
+  padding-bottom: 12px;
+}
+.rl-panel__room-num {
+  font-family: var(--serif);
+  font-size: 28px;
+  color: #1a1816;
+  font-weight: 500;
+  margin: 0;
+}
+.rl-panel__room-sub {
+  font-size: 12px;
+  color: #7b7366;
+}
+.rl-panel__rate {
+  font-size: 13px;
+  color: #a37a2c;
+  font-weight: 600;
+  font-style: italic;
+  font-family: var(--serif);
+}
+
+/* Steps in booking form */
+.rl-step {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.rl-step__title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #a37a2c;
+  font-weight: 600;
+}
+.rl-step__num {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 1px solid #d4a64a;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  color: #a37a2c;
+}
+
+.rl-btn-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+.rl-btn-grid--3 {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.rl-choice-btn {
+  background: #fbf9f6;
+  border: 1px solid rgba(212, 166, 74, 0.3);
+  border-radius: 6px;
+  padding: 10px 8px;
+  color: #3b3630;
+  font-size: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.rl-choice-btn:hover {
+  background: #f7efe1;
+  border-color: #d4a64a;
+}
+.rl-choice-btn.is-active {
+  background: #ffffff;
+  border-color: #d4a64a;
+  color: #8f6516;
+  font-weight: 600;
+  box-shadow: 0 0 0 1px #d4a64a, 0 3px 8px rgba(212, 166, 74, 0.2);
+}
+
+.rl-form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.rl-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.rl-input-group label {
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #8c7349;
+  font-weight: 600;
+}
+.rl-input-group input {
+  background: #fcfbf9 !important;
+  border: 1px solid rgba(212, 166, 74, 0.35) !important;
+  border-radius: 4px;
+  padding: 8px 10px !important;
+  color: #1a1816 !important;
+  font-size: 13px !important;
+}
+.rl-input-group input:focus {
+  border-color: #d4a64a !important;
+  box-shadow: 0 0 0 2px rgba(212, 166, 74, 0.2) !important;
+}
+
+/* Pricing breakdown */
+.rl-pricing {
+  border-top: 1px solid rgba(212, 166, 74, 0.25);
+  padding-top: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 12px;
+  color: #6e6557;
+}
+.rl-pricing__row {
+  display: flex;
+  justify-content: space-between;
+}
+.rl-pricing__total {
+  display: flex;
+  justify-content: space-between;
+  font-size: 16px;
+  font-weight: 600;
+  color: #1a1816;
+  margin-top: 4px;
+  padding-top: 6px;
+  border-top: 1px dashed rgba(212, 166, 74, 0.3);
+}
+.rl-pricing__total span:last-child {
+  font-family: var(--serif);
+  font-size: 22px;
+  color: #a37a2c;
+}
+
+.rl-confirm-btn {
+  background: linear-gradient(135deg, #d4a64a, #c49132);
+  border: none;
+  border-radius: 6px;
+  padding: 13px 18px;
+  color: #ffffff;
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(212, 166, 74, 0.35);
+  transition: all 0.2s;
+  text-align: center;
+}
+.rl-confirm-btn:hover {
+  background: linear-gradient(135deg, #dfb459, #ce9e41);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(212, 166, 74, 0.45);
+}
+.rl-confirm-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}

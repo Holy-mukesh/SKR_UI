@@ -5,6 +5,7 @@ import { api } from '../lib/api';
 import { venues, rupees } from '../data/venues';
 import { addDays, findUnit, freeByNight, nightsBetween, unitKey } from '../lib/stay';
 import { Stars } from '../components/Stars';
+import RoomLayout from './RoomLayout';
 import './admin.css';
 
 /*
@@ -187,6 +188,7 @@ function Dashboard({ user, onSignedOut }) {
         <nav className="adm-tabs" aria-label="Dashboard sections">
           <Link href="/admin" className={subpath === '' ? 'active' : undefined}>Overview</Link>
           <Link href="/admin/bookings" className={subpath === 'bookings' ? 'active' : undefined}>Bookings{fresh > 0 && <b className="adm-badge">{fresh}</b>}</Link>
+          <Link href="/admin/room-layout" className={subpath === 'room-layout' ? 'active' : undefined}>Room Layout</Link>
           <Link href="/admin/availability" className={subpath === 'availability' ? 'active' : undefined}>Availability</Link>
           <Link href="/admin/reviews" className={subpath === 'reviews' ? 'active' : undefined}>Reviews</Link>
         </nav>
@@ -205,9 +207,10 @@ function Dashboard({ user, onSignedOut }) {
           <>
             {subpath === '' && <Overview reviews={reviews} bookings={bookings} />}
             {subpath === 'bookings' && <Bookings bookings={bookings} onStatus={setStatus} onDelete={deleteBooking} />}
+            {subpath === 'room-layout' && <RoomLayout bookings={bookings} blocks={blocks} onBookSuccess={refresh} onError={guard} />}
             {subpath === 'availability' && <Availability bookings={bookings} blocks={blocks} onAdd={addBlock} onDelete={deleteBlock} onError={guard} />}
             {subpath === 'reviews' && <Reviews reviews={reviews} onDelete={deleteReview} />}
-            {subpath !== '' && subpath !== 'bookings' && subpath !== 'availability' && subpath !== 'reviews' && (
+            {subpath !== '' && subpath !== 'bookings' && subpath !== 'room-layout' && subpath !== 'availability' && subpath !== 'reviews' && (
               <Overview reviews={reviews} bookings={bookings} />
             )}
           </>
