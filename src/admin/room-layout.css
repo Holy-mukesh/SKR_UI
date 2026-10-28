@@ -347,28 +347,75 @@
   background: #d4a64a;
 }
 
-.rl-room--website {
-  background: #f4f8fd;
-  border-color: #8ab4f8;
+/* Payment Mode & Booking Source Variations */
+.rl-room--cash {
+  background: #f2fbf4;
+  border-color: #34a853 !important;
+  box-shadow: 0 2px 8px rgba(52, 168, 83, 0.12);
 }
-.rl-room--website .rl-room__status-text {
-  color: #1a73e8;
+.rl-room--cash .rl-room__slot {
+  background: #34a853;
 }
-.rl-room--website .rl-room__badge {
-  background: rgba(26, 115, 232, 0.15);
-  color: #1a73e8;
+.rl-room--cash .rl-room__status-text {
+  color: #1e7e34;
+}
+.rl-room--cash .rl-room__badge {
+  background: rgba(52, 168, 83, 0.15);
+  color: #1e7e34;
 }
 
-.rl-room--inperson {
-  background: #f2f9f4;
-  border-color: #81c995;
+.rl-room--gpay {
+  background: #f2f7fe;
+  border-color: #1a73e8 !important;
+  box-shadow: 0 2px 8px rgba(26, 115, 232, 0.12);
 }
-.rl-room--inperson .rl-room__status-text {
-  color: #188038;
+.rl-room--gpay .rl-room__slot {
+  background: #1a73e8;
 }
-.rl-room--inperson .rl-room__badge {
-  background: rgba(24, 128, 56, 0.15);
-  color: #188038;
+.rl-room--gpay .rl-room__status-text {
+  color: #1557b0;
+}
+.rl-room--gpay .rl-room__badge {
+  background: rgba(26, 115, 232, 0.15);
+  color: #1557b0;
+}
+
+.rl-room--card {
+  background: #f8f3fe;
+  border-color: #9333ea !important;
+  box-shadow: 0 2px 8px rgba(147, 51, 234, 0.12);
+}
+.rl-room--card .rl-room__slot {
+  background: #9333ea;
+}
+.rl-room--card .rl-room__status-text {
+  color: #6b21a8;
+}
+.rl-room--card .rl-room__badge {
+  background: rgba(147, 51, 234, 0.15);
+  color: #6b21a8;
+}
+
+/* Source badge indicator */
+.rl-room__source-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 9px;
+  letter-spacing: 0.05em;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 1px 5px;
+  border-radius: 4px;
+  margin-top: 2px;
+}
+.rl-room__source-tag--inperson {
+  background: rgba(30, 126, 52, 0.12);
+  color: #1e7e34;
+}
+.rl-room__source-tag--website {
+  background: rgba(21, 87, 176, 0.12);
+  color: #1557b0;
 }
 
 .rl-room--maintenance {
@@ -384,7 +431,7 @@
 .rl-legend {
   display: flex;
   align-items: center;
-  gap: 18px;
+  gap: 16px;
   flex-wrap: wrap;
   font-size: 11px;
   color: #7b7366;
@@ -404,8 +451,9 @@
 }
 .rl-legend__dot--available { background: #ffffff; border-color: #d4a64a; }
 .rl-legend__dot--selected { background: #d4a64a; }
-.rl-legend__dot--inperson { background: #e6f4ea; border-color: #81c995; }
-.rl-legend__dot--website { background: #e8f0fe; border-color: #8ab4f8; }
+.rl-legend__dot--cash { background: #f2fbf4; border-color: #34a853; }
+.rl-legend__dot--gpay { background: #f2f7fe; border-color: #1a73e8; }
+.rl-legend__dot--card { background: #f8f3fe; border-color: #9333ea; }
 .rl-legend__dot--maintenance { background: #dedad5; }
 
 /* Right Panel: Walk-In / New Booking Sidebar */

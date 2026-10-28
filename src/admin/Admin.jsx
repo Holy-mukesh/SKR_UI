@@ -6,6 +6,7 @@ import { venues, rupees } from '../data/venues';
 import { addDays, findUnit, freeByNight, nightsBetween, unitKey } from '../lib/stay';
 import { Stars } from '../components/Stars';
 import RoomLayout from './RoomLayout';
+import Insights from './Insights';
 import './admin.css';
 
 /*
@@ -94,6 +95,7 @@ function Dashboard({ user, onSignedOut }) {
   const [reviews, setReviews] = useState(null);
   const [bookings, setBookings] = useState(null);
   const [blocks, setBlocks] = useState(null);
+  const [reservations, setReservations] = useState(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -107,10 +109,16 @@ function Dashboard({ user, onSignedOut }) {
     setLoading(true);
     setError('');
     try {
-      const [r, b, k] = await Promise.all([api('/admin/reviews'), api('/admin/bookings'), api('/admin/blocks')]);
+      const [r, b, k, res] = await Promise.all([
+        api('/admin/reviews'),
+        api('/admin/bookings'),
+        api('/admin/blocks'),
+        api('/admin/reservations').catch(() => [])
+      ]);
       setReviews(r);
       setBookings(b);
       setBlocks(k);
+      setReservations(res || []);
     } catch (err) {
       guard(err);
     } finally {
@@ -156,6 +164,17 @@ function Dashboard({ user, onSignedOut }) {
     }
   };
 
+  const deleteReservation = async id => {
+    if (!confirm('Delete this reservation from Insights? The room will be released.')) return;
+    try {
+      await api(`/admin/reservations/${id}`, { method: 'DELETE' });
+      setReservations(list => list.filter(x => x.id !== id));
+      refresh();
+    } catch (err) {
+      guard(err);
+    }
+  };
+
   const addBlock = async block => {
     const saved = await api('/admin/blocks', { method: 'POST', body: block }); // errors are shown by the form
     setBlocks(list => [saved, ...list]);
@@ -173,7 +192,7 @@ function Dashboard({ user, onSignedOut }) {
   };
 
   const fresh = bookings?.filter(b => b.status === 'new').length ?? 0;
-  const ready = reviews && bookings && blocks;
+  const ready = reviews && bookings && blocks && reservations;
 
   const pathname = usePathname();
   const subpath = pathname?.replace(/^\/admin\/?/, '').split('/')[0] || '';
@@ -189,6 +208,7 @@ function Dashboard({ user, onSignedOut }) {
           <Link href="/admin" className={subpath === '' ? 'active' : undefined}>Overview</Link>
           <Link href="/admin/bookings" className={subpath === 'bookings' ? 'active' : undefined}>Bookings{fresh > 0 && <b className="adm-badge">{fresh}</b>}</Link>
           <Link href="/admin/room-layout" className={subpath === 'room-layout' ? 'active' : undefined}>Room Layout</Link>
+          <Link href="/admin/insights" className={subpath === 'insights' ? 'active' : undefined}>Insights{reservations?.length > 0 && <b className="adm-badge" style={{ background: '#34a853' }}>{reservations.length}</b>}</Link>
           <Link href="/admin/availability" className={subpath === 'availability' ? 'active' : undefined}>Availability</Link>
           <Link href="/admin/reviews" className={subpath === 'reviews' ? 'active' : undefined}>Reviews</Link>
         </nav>
@@ -205,13 +225,14 @@ function Dashboard({ user, onSignedOut }) {
           !error && <p className="adm-muted">Loading…</p>
         ) : (
           <>
-            {subpath === '' && <Overview reviews={reviews} bookings={bookings} />}
+            {subpath === '' && <Overview reviews={reviews} bookings={bookings} reservations={reservations} />}
             {subpath === 'bookings' && <Bookings bookings={bookings} onStatus={setStatus} onDelete={deleteBooking} />}
-            {subpath === 'room-layout' && <RoomLayout bookings={bookings} blocks={blocks} onBookSuccess={refresh} onError={guard} />}
-            {subpath === 'availability' && <Availability bookings={bookings} blocks={blocks} onAdd={addBlock} onDelete={deleteBlock} onError={guard} />}
+            {subpath === 'room-layout' && <RoomLayout bookings={bookings} blocks={blocks} reservations={reservations} onBookSuccess={refresh} onError={guard} />}
+            {subpath === 'insights' && <Insights reservations={reservations} bookings={bookings} onDeleteReservation={deleteReservation} />}
+            {subpath === 'availability' && <Availability bookings={bookings} blocks={blocks} reservations={reservations} onAdd={addBlock} onDelete={deleteBlock} onError={guard} />}
             {subpath === 'reviews' && <Reviews reviews={reviews} onDelete={deleteReview} />}
-            {subpath !== '' && subpath !== 'bookings' && subpath !== 'room-layout' && subpath !== 'availability' && subpath !== 'reviews' && (
-              <Overview reviews={reviews} bookings={bookings} />
+            {subpath !== '' && subpath !== 'bookings' && subpath !== 'room-layout' && subpath !== 'insights' && subpath !== 'availability' && subpath !== 'reviews' && (
+              <Overview reviews={reviews} bookings={bookings} reservations={reservations} />
             )}
           </>
         )}
@@ -394,7 +415,7 @@ function Bookings({ bookings, onStatus, onDelete }) {
 
 const MONTH_DAYS = 42;
 
-function Availability({ bookings, blocks, onAdd, onDelete }) {
+function Availability({ bookings, blocks, reservations = [], onAdd, onDelete }) {
   const [placeId, setPlaceId] = useState(venues[0].id);
   const venue = venues.find(v => v.id === placeId);
   const units = venue.inventory.flatMap(f => venue.rooms.filter(r => f.rooms[r.id]).map(r => ({ floor: f, room: r, count: f.rooms[r.id] })));
@@ -424,11 +445,12 @@ function Availability({ bookings, blocks, onAdd, onDelete }) {
     setRooms(String(u.count));
   };
 
-  // What takes rooms here: confirmed bookings and blocks (the same rule as the website)
+  // What takes rooms here: confirmed bookings, room blocks, and front-desk reservations from Room Layout
   const taken = useMemo(() => [
     ...bookings.filter(b => b.place === placeId && b.status === 'confirmed' && b.room),
-    ...blocks.filter(b => b.place === placeId)
-  ], [bookings, blocks, placeId]);
+    ...blocks.filter(b => b.place === placeId),
+    ...reservations.filter(r => r.place === placeId && r.room)
+  ], [bookings, blocks, reservations, placeId]);
 
   const gridFrom = addDays(monthStart, -((new Date(`${monthStart}T00:00`).getDay() + 6) % 7));
   const free = freeByNight(venue, taken, gridFrom, MONTH_DAYS)[unitKey(unit.floor.id, unit.room.id)];

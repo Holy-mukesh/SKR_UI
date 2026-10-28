@@ -13,6 +13,11 @@ export interface Booking {
   phone: string;
   email?: string;
   notes?: string;
+  // Extended fields
+  roomNumber?: string;
+  bookingChannel?: 'website' | 'in_person';
+  paymentMode?: 'cash' | 'gpay' | 'card' | 'pending';
+  totalAmount?: number;
 }
 
 export type ReviewStatus = 'pending' | 'approved' | 'rejected';
@@ -36,6 +41,29 @@ export interface RoomBlock {
   arrival: string;   // YYYY-MM-DD
   departure: string; // YYYY-MM-DD
   reason?: string;
+}
+
+// Front-Desk / Room Layout Admin Reservation (Saved directly to Insights)
+export interface FrontDeskReservation {
+  id: string;
+  created: string;
+  place: string;
+  floor: string;
+  floorName: string;
+  room: string;
+  roomName: string;
+  roomNumber: string;
+  bookingChannel: 'in_person' | 'website';
+  paymentMode: 'cash' | 'gpay' | 'card';
+  name: string;
+  phone: string;
+  arrival: string;
+  departure: string;
+  nights: number;
+  ratePerNight: number;
+  subtotal: number;
+  gst: number;
+  total: number;
 }
 
 export interface RoomType {

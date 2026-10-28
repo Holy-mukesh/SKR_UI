@@ -1,19 +1,27 @@
 import React, { useMemo, useState } from 'react';
 import { venues, rupees } from '../data/venues';
-import { addDays, nightsBetween, quote } from '../lib/stay';
+import { addDays, nightsBetween } from '../lib/stay';
+import type { FrontDeskReservation } from '../types';
 import './room-layout.css';
 
 interface RoomLayoutProps {
   bookings: any[];
   blocks: any[];
+  reservations?: FrontDeskReservation[];
   onBookSuccess?: () => void;
   onError?: (err: any) => void;
 }
 
-export default function RoomLayout({ bookings = [], blocks = [], onBookSuccess, onError }: RoomLayoutProps) {
+export default function RoomLayout({
+  bookings = [],
+  blocks = [],
+  reservations = [],
+  onBookSuccess,
+  onError
+}: RoomLayoutProps) {
   // Selected place (defaults to Aarapalayam hotel from reference image)
   const [placeId, setPlaceId] = useState('arapalayam');
-  
+
   // Selected Date (defaults to today)
   const todayStr = useMemo(() => {
     const d = new Date();
@@ -23,7 +31,7 @@ export default function RoomLayout({ bookings = [], blocks = [], onBookSuccess, 
 
   const venue = useMemo(() => venues.find(v => v.id === placeId) || venues[0], [placeId]);
 
-  // Selected floor (defaults to second floor like the reference image)
+  // Selected floor (defaults to second floor)
   const [floorId, setFloorId] = useState<string>('second');
 
   // Currently selected room number (null/empty initially so all rooms show in available color)
@@ -31,7 +39,7 @@ export default function RoomLayout({ bookings = [], blocks = [], onBookSuccess, 
 
   // Booking Form State for Front Desk walk-in
   const [bookingChannel, setBookingChannel] = useState<'in_person' | 'website'>('in_person');
-  const [paymentMode, setPaymentMode] = useState<'gpay' | 'cash' | 'card'>('gpay');
+  const [paymentMode, setPaymentMode] = useState<'cash' | 'gpay' | 'card'>('cash');
   const [guestName, setGuestName] = useState('');
   const [guestPhone, setGuestPhone] = useState('');
   const [checkIn, setCheckIn] = useState(todayStr);
@@ -41,7 +49,10 @@ export default function RoomLayout({ bookings = [], blocks = [], onBookSuccess, 
 
   // Find floor details
   const currentFloor = useMemo(() => {
-    return venue.inventory?.find(f => f.id === floorId) || venue.inventory?.[0] || { id: 'first', name: 'First floor', rooms: {} };
+    return (
+      venue.inventory?.find(f => f.id === floorId) ||
+      venue.inventory?.[0] || { id: 'first', name: 'First floor', rooms: {} }
+    );
   }, [venue, floorId]);
 
   // Find room type and price for this floor
@@ -51,82 +62,138 @@ export default function RoomLayout({ bookings = [], blocks = [], onBookSuccess, 
   }, [venue, currentFloor]);
 
   // Generate Room Numbers for this floor (e.g. floor 'second' -> 201..210)
-  const floorIndexMap: Record<string, number> = { first: 1, second: 2, third: 3, fourth: 4, terrace: 5, house: 1 };
+  const floorIndexMap: Record<string, number> = {
+    first: 1,
+    second: 2,
+    third: 3,
+    fourth: 4,
+    terrace: 5,
+    house: 1
+  };
   const prefix = (floorIndexMap[floorId] || 1) * 100;
 
   const totalRoomsOnFloor = useMemo(() => {
-    return Object.values(currentFloor.rooms).reduce((sum: number, c: any) => sum + Number(c || 0), 0) || 10;
+    return (
+      Object.values(currentFloor.rooms).reduce((sum: number, c: any) => sum + Number(c || 0), 0) || 10
+    );
   }, [currentFloor]);
 
   // Map each room to its status on selectedDate
   const roomsList = useMemo(() => {
-    // Check confirmed bookings or blocks active on selectedDate for this place & floor
-    const activeStays = bookings.filter(b => 
-      b.place === placeId && 
-      b.status === 'confirmed' &&
-      b.floor === floorId &&
-      selectedDate >= b.arrival &&
-      selectedDate < b.departure
+    // Check FrontDesk reservations for this place, floor and date
+    const activeFrontDesk = reservations.filter(
+      r =>
+        r.place === placeId &&
+        r.floor === floorId &&
+        selectedDate >= r.arrival &&
+        selectedDate < r.departure
     );
 
-    const activeBlocks = blocks.filter(k => 
-      k.place === placeId &&
-      k.floor === floorId &&
-      selectedDate >= k.arrival &&
-      selectedDate < k.departure
+    // Check confirmed public bookings
+    const activeWebsiteStays = bookings.filter(
+      b =>
+        b.place === placeId &&
+        b.status === 'confirmed' &&
+        b.floor === floorId &&
+        selectedDate >= b.arrival &&
+        selectedDate < b.departure
+    );
+
+    // Check maintenance blocks
+    const activeBlocks = blocks.filter(
+      k =>
+        k.place === placeId &&
+        k.floor === floorId &&
+        selectedDate >= k.arrival &&
+        selectedDate < k.departure
     );
 
     return Array.from({ length: totalRoomsOnFloor }, (_, i) => {
       const roomNum = `${prefix + i + 1}`;
-      
-      // Initially all rooms are available unless an active stay or block exists
-      let status: 'available' | 'website' | 'inperson' | 'maintenance' = 'available';
-      let sourceText = 'AVAILABLE';
 
-      // Check if real active confirmed booking exists for this room on selected date
-      if (activeStays[i]) {
-        const isWalkIn = activeStays[i].note?.toLowerCase().includes('in_person') || activeStays[i].note?.toLowerCase().includes('front desk');
-        status = isWalkIn ? 'inperson' : 'website';
-        sourceText = `${isWalkIn ? 'In person' : 'Website'} · ${activeStays[i].name?.split(' ')[0] || 'Guest'}`;
-      } else if (activeBlocks[i]) {
-        status = 'maintenance';
-        sourceText = activeBlocks[i].reason || 'Maintenance';
+      // 1. Check if there is a front-desk reservation matching this room number
+      const fdRes = activeFrontDesk.find(r => r.roomNumber === roomNum);
+      if (fdRes) {
+        return {
+          number: roomNum,
+          status: 'booked',
+          paymentMode: fdRes.paymentMode, // 'cash' (green) | 'gpay' (blue) | 'card' (purple)
+          bookingChannel: fdRes.bookingChannel, // 'in_person' | 'website'
+          sourceText: `${fdRes.paymentMode.toUpperCase()} · ${fdRes.bookingChannel === 'in_person' ? 'IN PERSON' : 'WEBSITE'}`,
+          guestName: fdRes.name
+        };
       }
 
+      // 2. Check if there is a public confirmed booking
+      if (activeWebsiteStays[i]) {
+        return {
+          number: roomNum,
+          status: 'booked',
+          paymentMode: 'gpay', // default for online bookings
+          bookingChannel: 'website' as const,
+          sourceText: 'GPAY · WEBSITE',
+          guestName: activeWebsiteStays[i].name
+        };
+      }
+
+      // 3. Check if under maintenance block
+      if (activeBlocks[i]) {
+        return {
+          number: roomNum,
+          status: 'maintenance' as const,
+          paymentMode: null,
+          bookingChannel: null,
+          sourceText: activeBlocks[i].reason || 'MAINTENANCE',
+          guestName: ''
+        };
+      }
+
+      // Default: Available
       return {
         number: roomNum,
-        status,
-        sourceText
+        status: 'available' as const,
+        paymentMode: null,
+        bookingChannel: null,
+        sourceText: 'AVAILABLE',
+        guestName: ''
       };
     });
-  }, [prefix, totalRoomsOnFloor, bookings, blocks, placeId, floorId, selectedDate]);
+  }, [prefix, totalRoomsOnFloor, reservations, bookings, blocks, placeId, floorId, selectedDate]);
 
   // Top metric numbers
   const metrics = useMemo(() => {
-    // Total rooms for the whole hotel
-    const totalVenueRooms = (venue.inventory || []).reduce((acc: number, f: any) => {
-      const counts = Object.values(f.rooms || {}) as number[];
-      const floorCount = counts.reduce((sum: number, c: number) => sum + (Number(c) || 0), 0);
-      return acc + floorCount;
-    }, 0) || 40;
+    const totalVenueRooms =
+      (venue.inventory || []).reduce((acc: number, f: any) => {
+        const counts = Object.values(f.rooms || {}) as number[];
+        const floorCount = counts.reduce((sum: number, c: number) => sum + (Number(c) || 0), 0);
+        return acc + floorCount;
+      }, 0) || 40;
 
-    // Active bookings and blocks on selected date across the whole place
-    const confirmedStays = bookings.filter(b =>
-      b.place === placeId &&
-      b.status === 'confirmed' &&
-      selectedDate >= b.arrival &&
-      selectedDate < b.departure
-    );
-    const maintenanceBlocks = blocks.filter(k =>
-      k.place === placeId &&
-      selectedDate >= k.arrival &&
-      selectedDate < k.departure
+    // Active front desk reservations
+    const activeFrontDesk = reservations.filter(
+      r => r.place === placeId && selectedDate >= r.arrival && selectedDate < r.departure
     );
 
-    const inPersonCount = confirmedStays.filter(b => b.note?.toLowerCase().includes('in_person') || b.note?.toLowerCase().includes('front desk')).length;
-    const websiteCount = confirmedStays.length - inPersonCount;
+    // Active confirmed bookings
+    const confirmedStays = bookings.filter(
+      b =>
+        b.place === placeId &&
+        b.status === 'confirmed' &&
+        selectedDate >= b.arrival &&
+        selectedDate < b.departure
+    );
+
+    // Active maintenance blocks
+    const maintenanceBlocks = blocks.filter(
+      k => k.place === placeId && selectedDate >= k.arrival && selectedDate < k.departure
+    );
+
+    const inPersonCount = activeFrontDesk.filter(r => r.bookingChannel === 'in_person').length;
+    const websiteCount =
+      activeFrontDesk.filter(r => r.bookingChannel === 'website').length + confirmedStays.length;
     const maintCount = maintenanceBlocks.length;
-    const availableCount = Math.max(0, totalVenueRooms - confirmedStays.length - maintCount);
+    const takenCount = activeFrontDesk.length + confirmedStays.length + maintCount;
+    const availableCount = Math.max(0, totalVenueRooms - takenCount);
 
     return {
       total: totalVenueRooms,
@@ -135,7 +202,7 @@ export default function RoomLayout({ bookings = [], blocks = [], onBookSuccess, 
       website: websiteCount,
       maintenance: maintCount
     };
-  }, [venue, bookings, blocks, placeId, selectedDate]);
+  }, [venue, reservations, bookings, blocks, placeId, selectedDate]);
 
   // Pricing calculations
   const nights = Math.max(1, nightsBetween(checkIn, checkOut));
@@ -144,20 +211,37 @@ export default function RoomLayout({ bookings = [], blocks = [], onBookSuccess, 
   const gst = Math.round(subtotal * 0.05);
   const total = subtotal + gst;
 
-  // Floor free counts based on real bookings/blocks
+  // Floor free counts
   const getFloorFreeCount = (fId: string) => {
     const floorObj = venue.inventory?.find(f => f.id === fId);
     if (!floorObj) return 0;
     const counts = Object.values(floorObj.rooms || {}) as number[];
     const floorTotal = counts.reduce((s: number, c: number) => s + (Number(c) || 0), 0);
-    const taken = bookings.filter(b => b.place === placeId && b.status === 'confirmed' && b.floor === fId && selectedDate >= b.arrival && selectedDate < b.departure).length
-      + blocks.filter(k => k.place === placeId && k.floor === fId && selectedDate >= k.arrival && selectedDate < k.departure).length;
+    const taken =
+      reservations.filter(
+        r => r.place === placeId && r.floor === fId && selectedDate >= r.arrival && selectedDate < r.departure
+      ).length +
+      bookings.filter(
+        b =>
+          b.place === placeId &&
+          b.status === 'confirmed' &&
+          b.floor === fId &&
+          selectedDate >= b.arrival &&
+          selectedDate < b.departure
+      ).length +
+      blocks.filter(
+        k => k.place === placeId && k.floor === fId && selectedDate >= k.arrival && selectedDate < k.departure
+      ).length;
     return Math.max(0, floorTotal - taken);
   };
 
-  // Submit quick walk-in reservation
+  // Submit Front Desk reservation directly to Insights (/api/admin/reservations)
   const handleConfirmBooking = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!selectedRoomNumber) {
+      alert('Please tap a room on the floor layout to select it.');
+      return;
+    }
     if (!guestName.trim()) {
       alert('Please enter guest name.');
       return;
@@ -166,29 +250,37 @@ export default function RoomLayout({ bookings = [], blocks = [], onBookSuccess, 
     setFeedbackMsg('');
 
     try {
-      const res = await fetch('/api/bookings', {
+      const res = await fetch('/api/admin/reservations', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          name: guestName,
-          phone: guestPhone || '0000000000',
           place: placeId,
           floor: floorId,
+          floorName: currentFloor.name,
           room: currentRoomType.id,
-          rooms: 1,
-          guests: 2,
+          roomName: currentRoomType.name,
+          roomNumber: selectedRoomNumber,
+          bookingChannel,
+          paymentMode,
+          name: guestName,
+          phone: guestPhone || '0000000000',
           arrival: checkIn,
           departure: checkOut,
-          note: `Front Desk [${bookingChannel.toUpperCase()}] | Paid via ${paymentMode.toUpperCase()} | Room ${selectedRoomNumber}`
+          nights,
+          ratePerNight,
+          subtotal,
+          gst,
+          total
         })
       });
 
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Booking failed');
+      if (!res.ok) throw new Error(data.error || 'Reservation failed');
 
-      setFeedbackMsg(`✓ Room ${selectedRoomNumber} confirmed! Reservation ID: ${data.id.slice(0, 8)}`);
+      setFeedbackMsg(`✓ Room ${selectedRoomNumber} reserved! Logged in Insights.`);
       setGuestName('');
       setGuestPhone('');
+      setSelectedRoomNumber('');
       onBookSuccess?.();
     } catch (err: any) {
       alert(err.message);
@@ -212,22 +304,32 @@ export default function RoomLayout({ bookings = [], blocks = [], onBookSuccess, 
         <div className="rl-selectors">
           <div className="rl-select-box">
             <label>Place</label>
-            <select value={placeId} onChange={e => {
-              setPlaceId(e.target.value);
-              setFloorId('first');
-            }}>
+            <select
+              value={placeId}
+              onChange={e => {
+                setPlaceId(e.target.value);
+                setFloorId('first');
+                setSelectedRoomNumber('');
+              }}
+            >
               {venues.map(v => (
-                <option key={v.id} value={v.id}>{v.booking}</option>
+                <option key={v.id} value={v.id}>
+                  {v.booking}
+                </option>
               ))}
             </select>
           </div>
 
           <div className="rl-select-box">
             <label>Date</label>
-            <input 
-              type="date" 
-              value={selectedDate} 
-              onChange={e => setSelectedDate(e.target.value)} 
+            <input
+              type="date"
+              value={selectedDate}
+              onChange={e => {
+                setSelectedDate(e.target.value);
+                setCheckIn(e.target.value);
+                setCheckOut(addDays(e.target.value, 2));
+              }}
             />
           </div>
         </div>
@@ -241,19 +343,27 @@ export default function RoomLayout({ bookings = [], blocks = [], onBookSuccess, 
         </div>
         <div className="rl-metric-card">
           <span className="rl-metric-card__label">Available</span>
-          <span className="rl-metric-card__val" style={{ color: '#8f6516' }}>{metrics.available}</span>
+          <span className="rl-metric-card__val" style={{ color: '#8f6516' }}>
+            {metrics.available}
+          </span>
         </div>
         <div className="rl-metric-card">
           <span className="rl-metric-card__label">In Person</span>
-          <span className="rl-metric-card__val" style={{ color: '#188038' }}>{metrics.inPerson}</span>
+          <span className="rl-metric-card__val" style={{ color: '#34a853' }}>
+            {metrics.inPerson}
+          </span>
         </div>
         <div className="rl-metric-card">
           <span className="rl-metric-card__label">Website</span>
-          <span className="rl-metric-card__val" style={{ color: '#1a73e8' }}>{metrics.website}</span>
+          <span className="rl-metric-card__val" style={{ color: '#1a73e8' }}>
+            {metrics.website}
+          </span>
         </div>
         <div className="rl-metric-card">
           <span className="rl-metric-card__label">Under Maintenance</span>
-          <span className="rl-metric-card__val" style={{ color: '#8a8279' }}>{metrics.maintenance}</span>
+          <span className="rl-metric-card__val" style={{ color: '#8a8279' }}>
+            {metrics.maintenance}
+          </span>
         </div>
       </div>
 
@@ -265,7 +375,9 @@ export default function RoomLayout({ bookings = [], blocks = [], onBookSuccess, 
           <div className="rl-floor-nav">
             <div className="rl-floor-info">
               <h2>{currentFloor.name}</h2>
-              <span>· {currentRoomType.name} · {rupees(ratePerNight)} a night</span>
+              <span>
+                · {currentRoomType.name} · {rupees(ratePerNight)} a night
+              </span>
             </div>
 
             <div className="rl-floor-pills">
@@ -274,7 +386,10 @@ export default function RoomLayout({ bookings = [], blocks = [], onBookSuccess, 
                   type="button"
                   key={f.id}
                   className={`rl-floor-pill${floorId === f.id ? ' is-active' : ''}`}
-                  onClick={() => setFloorId(f.id)}
+                  onClick={() => {
+                    setFloorId(f.id);
+                    setSelectedRoomNumber('');
+                  }}
                 >
                   {f.name.split(' ')[0]} <small>{getFloorFreeCount(f.id)} free</small>
                 </button>
@@ -292,12 +407,20 @@ export default function RoomLayout({ bookings = [], blocks = [], onBookSuccess, 
 
             {/* Hallway with top and bottom rows */}
             <div className="rl-hallway">
-              {/* Row 1: Rooms 201 to 205 */}
+              {/* Row 1: Rooms (First half) */}
               <div className="rl-rooms-row">
                 {roomsList.slice(0, Math.ceil(roomsList.length / 2)).map(room => {
                   const isSelected = selectedRoomNumber === room.number;
-                  let cardClass = `rl-room rl-room--${room.status}`;
-                  if (isSelected) cardClass += ' rl-room--selected';
+                  let cardClass = 'rl-room';
+                  if (isSelected) {
+                    cardClass += ' rl-room--selected';
+                  } else if (room.status === 'booked' && room.paymentMode) {
+                    cardClass += ` rl-room--${room.paymentMode}`; // cash | gpay | card
+                  } else if (room.status === 'maintenance') {
+                    cardClass += ' rl-room--maintenance';
+                  } else {
+                    cardClass += ' rl-room--available';
+                  }
 
                   return (
                     <div
@@ -308,12 +431,19 @@ export default function RoomLayout({ bookings = [], blocks = [], onBookSuccess, 
                       <div className="rl-room__slot" />
                       <div className="rl-room__top">
                         <span className="rl-room__number">{room.number}</span>
-                        {room.status === 'website' && <span className="rl-room__badge">🌐</span>}
-                        {room.status === 'inperson' && <span className="rl-room__badge">👤</span>}
+                        {room.bookingChannel === 'website' && <span className="rl-room__badge">🌐</span>}
+                        {room.bookingChannel === 'in_person' && <span className="rl-room__badge">👤</span>}
                       </div>
+
                       <div className="rl-room__status-text">
-                        {isSelected ? 'SELECTED' : (room.sourceText || 'AVAILABLE')}
+                        {isSelected ? 'SELECTED' : room.sourceText}
                       </div>
+
+                      {room.guestName && !isSelected && (
+                        <div style={{ fontSize: '11px', color: '#1a1816', fontWeight: 600, marginTop: '2px' }}>
+                          {room.guestName}
+                        </div>
+                      )}
                     </div>
                   );
                 })}
@@ -322,12 +452,20 @@ export default function RoomLayout({ bookings = [], blocks = [], onBookSuccess, 
               {/* Corridor Middle Divider */}
               <div className="rl-corridor">Corridor</div>
 
-              {/* Row 2: Rooms 206 to 210 */}
+              {/* Row 2: Rooms (Second half) */}
               <div className="rl-rooms-row">
                 {roomsList.slice(Math.ceil(roomsList.length / 2)).map(room => {
                   const isSelected = selectedRoomNumber === room.number;
-                  let cardClass = `rl-room rl-room--${room.status}`;
-                  if (isSelected) cardClass += ' rl-room--selected';
+                  let cardClass = 'rl-room';
+                  if (isSelected) {
+                    cardClass += ' rl-room--selected';
+                  } else if (room.status === 'booked' && room.paymentMode) {
+                    cardClass += ` rl-room--${room.paymentMode}`; // cash | gpay | card
+                  } else if (room.status === 'maintenance') {
+                    cardClass += ' rl-room--maintenance';
+                  } else {
+                    cardClass += ' rl-room--available';
+                  }
 
                   return (
                     <div
@@ -338,12 +476,19 @@ export default function RoomLayout({ bookings = [], blocks = [], onBookSuccess, 
                       <div className="rl-room__slot" />
                       <div className="rl-room__top">
                         <span className="rl-room__number">{room.number}</span>
-                        {room.status === 'website' && <span className="rl-room__badge">🌐</span>}
-                        {room.status === 'inperson' && <span className="rl-room__badge">👤</span>}
+                        {room.bookingChannel === 'website' && <span className="rl-room__badge">🌐</span>}
+                        {room.bookingChannel === 'in_person' && <span className="rl-room__badge">👤</span>}
                       </div>
+
                       <div className="rl-room__status-text">
-                        {isSelected ? 'SELECTED' : (room.sourceText || 'AVAILABLE')}
+                        {isSelected ? 'SELECTED' : room.sourceText}
                       </div>
+
+                      {room.guestName && !isSelected && (
+                        <div style={{ fontSize: '11px', color: '#1a1816', fontWeight: 600, marginTop: '2px' }}>
+                          {room.guestName}
+                        </div>
+                      )}
                     </div>
                   );
                 })}
@@ -353,7 +498,7 @@ export default function RoomLayout({ bookings = [], blocks = [], onBookSuccess, 
 
           {/* Canvas Legend */}
           <div className="rl-legend" style={{ marginTop: '16px' }}>
-            <span style={{ fontWeight: 600, color: '#1a1816' }}>ROOM:</span>
+            <span style={{ fontWeight: 600, color: '#1a1816' }}>STATUS:</span>
             <div className="rl-legend__item">
               <span className="rl-legend__dot rl-legend__dot--available" />
               <span>Available</span>
@@ -366,13 +511,26 @@ export default function RoomLayout({ bookings = [], blocks = [], onBookSuccess, 
               <span className="rl-legend__dot rl-legend__dot--maintenance" />
               <span>Maintenance</span>
             </div>
-            <span style={{ marginLeft: '12px', fontWeight: 600, color: '#1a1816' }}>BOOKED VIA:</span>
+
+            <span style={{ marginLeft: '12px', fontWeight: 600, color: '#1a1816' }}>PAYMENT COLOR:</span>
             <div className="rl-legend__item">
-              <span className="rl-legend__dot rl-legend__dot--inperson" />
+              <span className="rl-legend__dot rl-legend__dot--cash" />
+              <span>💵 Cash (Green)</span>
+            </div>
+            <div className="rl-legend__item">
+              <span className="rl-legend__dot rl-legend__dot--gpay" />
+              <span>📱 GPay (Blue)</span>
+            </div>
+            <div className="rl-legend__item">
+              <span className="rl-legend__dot rl-legend__dot--card" />
+              <span>💳 Card (Purple)</span>
+            </div>
+
+            <span style={{ marginLeft: '12px', fontWeight: 600, color: '#1a1816' }}>CHANNEL:</span>
+            <div className="rl-legend__item">
               <span>👤 In person</span>
             </div>
             <div className="rl-legend__item">
-              <span className="rl-legend__dot rl-legend__dot--website" />
               <span>🌐 Website</span>
             </div>
           </div>
@@ -384,13 +542,17 @@ export default function RoomLayout({ bookings = [], blocks = [], onBookSuccess, 
 
           <div className="rl-panel__room-head">
             <div>
-              <h3 className="rl-panel__room-num">{selectedRoomNumber ? `Room ${selectedRoomNumber}` : 'Select a room'}</h3>
-              <span className="rl-panel__room-sub">{currentRoomType.name} · {currentFloor.name}</span>
+              <h3 className="rl-panel__room-num">
+                {selectedRoomNumber ? `Room ${selectedRoomNumber}` : 'Select a room'}
+              </h3>
+              <span className="rl-panel__room-sub">
+                {currentRoomType.name} · {currentFloor.name}
+              </span>
             </div>
             <span className="rl-panel__rate">{rupees(ratePerNight)} / night</span>
           </div>
 
-          {/* Step 2: How was it booked? */}
+          {/* Step 2: How was it booked? (In person vs Website) */}
           <div className="rl-step">
             <div className="rl-step__title">
               <span className="rl-step__num">2</span> How was it booked?
@@ -413,7 +575,7 @@ export default function RoomLayout({ bookings = [], blocks = [], onBookSuccess, 
             </div>
           </div>
 
-          {/* Step 3: Mode of Payment */}
+          {/* Step 3: Mode of Payment (Cash: Green, GPay: Blue, Card: Purple) */}
           <div className="rl-step">
             <div className="rl-step__title">
               <span className="rl-step__num">3</span> Mode of payment
@@ -421,21 +583,24 @@ export default function RoomLayout({ bookings = [], blocks = [], onBookSuccess, 
             <div className="rl-btn-grid rl-btn-grid--3">
               <button
                 type="button"
-                className={`rl-choice-btn${paymentMode === 'gpay' ? ' is-active' : ''}`}
-                onClick={() => setPaymentMode('gpay')}
-              >
-                <span>📱 GPay</span>
-              </button>
-              <button
-                type="button"
                 className={`rl-choice-btn${paymentMode === 'cash' ? ' is-active' : ''}`}
+                style={paymentMode === 'cash' ? { borderColor: '#34a853', color: '#1e7e34' } : undefined}
                 onClick={() => setPaymentMode('cash')}
               >
                 <span>💵 Cash</span>
               </button>
               <button
                 type="button"
+                className={`rl-choice-btn${paymentMode === 'gpay' ? ' is-active' : ''}`}
+                style={paymentMode === 'gpay' ? { borderColor: '#1a73e8', color: '#1557b0' } : undefined}
+                onClick={() => setPaymentMode('gpay')}
+              >
+                <span>📱 GPay</span>
+              </button>
+              <button
+                type="button"
                 className={`rl-choice-btn${paymentMode === 'card' ? ' is-active' : ''}`}
+                style={paymentMode === 'card' ? { borderColor: '#9333ea', color: '#6b21a8' } : undefined}
                 onClick={() => setPaymentMode('card')}
               >
                 <span>💳 Card</span>
@@ -495,7 +660,9 @@ export default function RoomLayout({ bookings = [], blocks = [], onBookSuccess, 
           {/* Pricing Summary */}
           <div className="rl-pricing">
             <div className="rl-pricing__row">
-              <span>{rupees(ratePerNight)} × {nights} night{nights > 1 ? 's' : ''}</span>
+              <span>
+                {rupees(ratePerNight)} × {nights} night{nights > 1 ? 's' : ''}
+              </span>
               <span>{rupees(subtotal)}</span>
             </div>
             <div className="rl-pricing__row">
@@ -509,9 +676,7 @@ export default function RoomLayout({ bookings = [], blocks = [], onBookSuccess, 
           </div>
 
           {feedbackMsg && (
-            <div style={{ color: '#188038', fontSize: '13px', fontWeight: 600 }}>
-              {feedbackMsg}
-            </div>
+            <div style={{ color: '#188038', fontSize: '13px', fontWeight: 600 }}>{feedbackMsg}</div>
           )}
 
           <button
@@ -519,7 +684,11 @@ export default function RoomLayout({ bookings = [], blocks = [], onBookSuccess, 
             className="rl-confirm-btn"
             disabled={submitting || !selectedRoomNumber}
           >
-            {submitting ? 'Confirming…' : selectedRoomNumber ? `Confirm Booking · Room ${selectedRoomNumber}` : 'Tap a room to book'}
+            {submitting
+              ? 'Saving to Insights…'
+              : selectedRoomNumber
+              ? `Confirm & Save to Insights · Room ${selectedRoomNumber}`
+              : 'Tap a room to book'}
           </button>
         </form>
       </div>

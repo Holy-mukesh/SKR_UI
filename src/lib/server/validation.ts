@@ -90,9 +90,14 @@ export function parseBooking(body: any) {
 
 export const takenAt = (placeId: string, skipId?: string | null) => {
   const store = getStore();
+  const confirmedBookings = store.bookings.all().filter((b: any) => b.place === placeId && b.status === 'confirmed' && b.room && b.id !== skipId);
+  const blocks = store.blocks.all().filter((b: any) => b.place === placeId);
+  const reservations = (store.reservations ? store.reservations.all() : []).filter((r: any) => r.place === placeId && r.id !== skipId);
+
   return [
-    ...store.bookings.all().filter((b: any) => b.place === placeId && b.status === 'confirmed' && b.room && b.id !== skipId),
-    ...store.blocks.all().filter((b: any) => b.place === placeId)
+    ...confirmedBookings,
+    ...blocks,
+    ...reservations
   ];
 };
 
