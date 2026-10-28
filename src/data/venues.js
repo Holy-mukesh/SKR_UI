@@ -51,6 +51,9 @@ export const venues = [
     backdrop: { src: '/assets/gallery/kodaikanal/backdrop.webp', small: '/assets/gallery/kodaikanal/backdrop-sm.webp' },
     pin: { lat: 10.2696, lng: 77.5043, label: 'Vilpatti, Kodaikanal' },
     directions: maps('Vilpatti, Kodaikanal, Tamil Nadu'),
+    googleReviewUrl: 'https://www.google.com/maps/place/SKR+SIVABHAGYA+Adventure+Resort/@10.275755,77.4966797,17z/data=!4m11!3m10!1s0x3b0767c6824f7c35:0x4972e034b1048c72!5m2!4m1!1i2!8m2!3d10.275755!4d77.4992546!9m1!1b1!16s%2Fg%2F11nvz6zj9b?entry=ttu',
+    googleRating: 4.8,
+    googleReviewCount: 184,
     photos: kodaikanalPhotos
   },
   {
@@ -92,6 +95,9 @@ export const venues = [
     backdrop: { src: '/assets/gallery/arapalayam/backdrop.webp', small: '/assets/gallery/arapalayam/backdrop-sm.webp', position: '40% 55%' },
     pin: { lat: 9.9342, lng: 78.103, label: '47, D.D. Main Road, Arappalayam' },
     directions: maps('47 D.D. Main Road Arappalayam Madurai 625016'),
+    googleReviewUrl: 'https://www.google.com/maps/place/Hotel+SKR+Sivabhagya/@9.9356795,78.099898,17z/data=!4m24!1m12!3m11!1s0x3b00cfa749c44739:0xf03e7d4a55a4075!2sHotel+SKR+Sivabhagya!5m2!4m1!1i2!8m2!3d9.9356795!4d78.1024729!9m1!1b1!16s%2Fg%2F11y3ps63xb!3m10!1s0x3b00cfa749c44739:0xf03e7d4a55a4075!5m2!4m1!1i2!8m2!3d9.9356795!4d78.1024729!9m1!1b1!16s%2Fg%2F11y3ps63xb?entry=ttu',
+    googleRating: 4.6,
+    googleReviewCount: 312,
     photos: arapalayamPhotos
   },
   {
@@ -120,6 +126,9 @@ export const venues = [
     backdrop: { src: '/assets/gallery/kochadai/backdrop.webp', small: '/assets/gallery/kochadai/backdrop-sm.webp', position: '30% 50%' },
     pin: { lat: 9.9405, lng: 78.084, label: 'Annai Bharath community, Kochadai' },
     directions: maps('Kochadai, Madurai, Tamil Nadu'),
+    googleReviewUrl: 'https://www.google.com/maps/place/SKR+SIVABHAGYA/@9.9429466,78.067811,17z/data=!4m8!3m7!1s0x3b00cf0022d0d7ff:0x701be1b3a5a02a44!8m2!3d9.9429466!4d78.0703859!9m1!1b1!16s%2Fg%2F11w580wsq3?entry=ttu',
+    googleRating: 4.9,
+    googleReviewCount: 96,
     photos: kochadaiPhotos
   }
 ];

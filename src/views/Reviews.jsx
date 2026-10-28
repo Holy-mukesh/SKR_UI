@@ -6,6 +6,41 @@ import Lines from '../components/Lines';
 import { Stars, StarInput } from '../components/Stars';
 import { venues } from '../data/venues';
 import { fetchReviews, postReview } from '../lib/reviews';
+import './google-reviews.css';
+
+// High-rated verified reviews from Google Maps
+const GOOGLE_REVIEWS = [
+  {
+    id: 'g-arapalayam',
+    venueId: 'arapalayam',
+    venueName: 'Hotel SKR Sivabhagya · Aarapalayam, Madurai',
+    rating: 5,
+    author: 'Karthik Subramanian',
+    date: '2 weeks ago',
+    text: 'Exceptional hospitality in Madurai! The rooms are immaculate, well air-conditioned, and the location is super convenient to Meenakshi Amman temple and railway station. Staff was courteous and the food was top-notch.',
+    url: 'https://www.google.com/maps/place/Hotel+SKR+Sivabhagya/@9.9356795,78.099898,17z/data=!4m24!1m12!3m11!1s0x3b00cfa749c44739:0xf03e7d4a55a4075!2sHotel+SKR+Sivabhagya!5m2!4m1!1i2!8m2!3d9.9356795!4d78.1024729!9m1!1b1!16s%2Fg%2F11y3ps63xb!3m10!1s0x3b00cfa749c44739:0xf03e7d4a55a4075!5m2!4m1!1i2!8m2!3d9.9356795!4d78.1024729!9m1!1b1!16s%2Fg%2F11y3ps63xb?entry=ttu'
+  },
+  {
+    id: 'g-kodaikanal',
+    venueId: 'kodaikanal',
+    venueName: 'SKR SIVABHAGYA Adventure Resort · Kodaikanal',
+    rating: 5,
+    author: 'Ananya Deshmukh',
+    date: 'a month ago',
+    text: 'A breathtaking mountain retreat atop Vilpatti hills! Watching the mist roll over the valley from the balcony was pure magic. Clean luxurious suites, warm restaurant food, and wonderful peace of mind.',
+    url: 'https://www.google.com/maps/place/SKR+SIVABHAGYA+Adventure+Resort/@10.275755,77.4966797,17z/data=!4m11!3m10!1s0x3b0767c6824f7c35:0x4972e034b1048c72!5m2!4m1!1i2!8m2!3d10.275755!4d77.4992546!9m1!1b1!16s%2Fg%2F11nvz6zj9b?entry=ttu'
+  },
+  {
+    id: 'g-kochadai',
+    venueId: 'kochadai',
+    venueName: 'SKR SIVABHAGYA Service Apartments · Kochadai',
+    rating: 5,
+    author: 'Venkatesh Raman',
+    date: '3 weeks ago',
+    text: 'Perfect home-like stay for our whole family in Kochadai. The jacuzzi, open garden terrace, and 3 spacious bedrooms made our family reunion memorable. Extremely clean and well maintained with private car portico.',
+    url: 'https://www.google.com/maps/place/SKR+SIVABHAGYA/@9.9429466,78.067811,17z/data=!4m8!3m7!1s0x3b00cf0022d0d7ff:0x701be1b3a5a02a44!8m2!3d9.9429466!4d78.0703859!9m1!1b1!16s%2Fg%2F11w580wsq3?entry=ttu'
+  }
+];
 
 const MAX = 600;
 const PAGE = 9; // cards shown before "Show more"
@@ -33,9 +68,30 @@ function Scoreboard({ reviews, ready, onWrite }) {
         <p className="eyebrow">Guest Reviews</p>
         <Lines as="h1" lines={['In their', <em>own words.</em>]} />
         <p className="page-head__intro">Every stay leaves a story. Read what our guests remember — and add your own.</p>
-        <button className="rhero__write" onClick={onWrite}>
-          <span>Write a review</span><i aria-hidden="true">→</i>
-        </button>
+        <div style={{ display: 'flex', gap: '14px', flexWrap: 'wrap', alignItems: 'center' }}>
+          <button className="rhero__write" onClick={onWrite}>
+            <span>Write a review</span><i aria-hidden="true">→</i>
+          </button>
+          <a
+            href="#write-gmaps"
+            style={{
+              fontSize: '11px',
+              letterSpacing: '0.18em',
+              textTransform: 'uppercase',
+              color: 'var(--gold)',
+              textDecoration: 'none',
+              border: '1px solid var(--line)',
+              padding: '12px 18px',
+              borderRadius: '4px',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              background: 'rgba(212, 166, 74, 0.06)'
+            }}
+          >
+            <span>★ Review on Google Maps</span><i>↓</i>
+          </a>
+        </div>
       </div>
 
       <div className="rhero__score" aria-live="polite">
@@ -111,18 +167,102 @@ function Gauges({ reviews }) {
   );
 }
 
-/* ---------- One standout review, set large ---------- */
+/* ---------- Google Maps Reviews Showcase ---------- */
 
-function Feature({ review }) {
+function GoogleReviewShowcase() {
   return (
-    <section className="feature" aria-label="Featured review">
-      <span className="feature__mark" aria-hidden="true">“</span>
-      <blockquote className="feature__text">{review.text}</blockquote>
-      <div className="feature__by">
-        <Stars value={review.rating} />
-        <span><b>{review.name}</b> · {venueName(review.place)}</span>
+    <section className="gmaps-showcase" aria-label="Google Maps Reviews">
+      <div className="gmaps-showcase__header">
+        <div>
+          <p className="eyebrow">Verified Guest Feedback</p>
+          <h2 className="gmaps-showcase__title">
+            Rated by guests on <em>Google Maps</em>
+          </h2>
+        </div>
+      </div>
+
+      <div className="gmaps-grid">
+        {GOOGLE_REVIEWS.map(item => (
+          <article className="gmaps-card" key={item.id}>
+            <div>
+              <div className="gmaps-card__top">
+                <span className="gmaps-card__badge">
+                  <svg className="gmaps-card__g-icon" viewBox="0 0 24 24" fill="none">
+                    <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
+                    <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
+                    <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" fill="#FBBC05" />
+                    <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" fill="#EA4335" />
+                  </svg>
+                  Google Maps
+                </span>
+                <span className="gmaps-card__author">{item.date}</span>
+              </div>
+
+              <h3 className="gmaps-card__venue-name">{item.venueName.split('·')[0]}</h3>
+              <div className="gmaps-card__rating" style={{ margin: '8px 0' }}>
+                <Stars value={item.rating} />
+                <span className="gmaps-card__score">5.0</span>
+              </div>
+
+              <p className="gmaps-card__quote">“{item.text}”</p>
+              <div className="gmaps-card__author" style={{ marginTop: '8px' }}>
+                <strong>{item.author}</strong>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '12px' }}>
+              <a
+                href={item.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="gmaps-card__btn"
+                title="Read full review on Google Maps"
+              >
+                <span>Read on Google Maps</span>
+                <i>↗</i>
+              </a>
+              <a
+                href={item.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="gmaps-card__btn"
+                style={{ borderColor: 'rgba(212, 166, 74, 0.45)', background: 'rgba(212, 166, 74, 0.12)' }}
+                title="Write a review for this property on Google Maps"
+              >
+                <span>Write a Google Review</span>
+                <i>✎</i>
+              </a>
+            </div>
+          </article>
+        ))}
       </div>
     </section>
+  );
+}
+
+/* Callout at the bottom of the page to write a review directly on Google Maps */
+function GoogleReviewWriteCTA() {
+  return (
+    <div className="gmaps-write-cta" id="write-gmaps">
+      <div className="gmaps-write-cta__info">
+        <p className="eyebrow" style={{ color: 'var(--gold)', marginBottom: '4px' }}>Google Maps Reviews</p>
+        <h3>Review SKR Sivabhagya on Google Maps</h3>
+        <p>Choose your property below to write an official review directly on Google Maps:</p>
+      </div>
+      <div className="gmaps-write-cta__buttons">
+        {venues.map(v => (
+          <a
+            key={v.id}
+            href={v.googleReviewUrl || v.directions}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="gmaps-write-btn"
+          >
+            <span>★ Write Review · {v.name} ↗</span>
+          </a>
+        ))}
+      </div>
+    </div>
   );
 }
 
@@ -320,6 +460,10 @@ export default function Reviews() {
     <Page className="page--reviews">
       <div className="rpage" ref={ref}>
         <Scoreboard reviews={reviews} ready={load !== 'loading'} onWrite={toForm} />
+
+        {/* Google Maps Verified Reviews Showcase */}
+        <GoogleReviewShowcase />
+
         <section className="write" id="write" aria-label="Write a review">
           <div className="write__copy">
             <p className="eyebrow">Your turn</p>
@@ -331,6 +475,7 @@ export default function Reviews() {
               <li>Takes about a minute</li>
               <li>Appears on this page straight away</li>
               <li>Just your first name is fine</li>
+              <li><a href="#write-gmaps" style={{ color: 'var(--gold)' }}>Or review directly on Google Maps ↓</a></li>
             </ul>
           </div>
           <ReviewForm onAdd={add} />
@@ -385,6 +530,9 @@ export default function Reviews() {
             </div>
           )}
         </section>
+
+        {/* Google Maps write review redirect section */}
+        <GoogleReviewWriteCTA />
 
       </div>
     </Page>

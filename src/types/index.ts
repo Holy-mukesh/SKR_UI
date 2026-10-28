@@ -113,4 +113,7 @@ export interface Venue {
   pin: VenuePin;
   directions: string;
   photos: string[];
+  googleReviewUrl?: string;
+  googleRating?: number;
+  googleReviewCount?: number;
 }

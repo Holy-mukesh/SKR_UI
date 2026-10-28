@@ -89,11 +89,11 @@ export default function RoomLayout({
         selectedDate < r.departure
     );
 
-    // Check confirmed public bookings
+    // Check all active website bookings (new or confirmed, not cancelled)
     const activeWebsiteStays = bookings.filter(
       b =>
         b.place === placeId &&
-        b.status === 'confirmed' &&
+        b.status !== 'cancelled' &&
         b.floor === floorId &&
         selectedDate >= b.arrival &&
         selectedDate < b.departure
@@ -124,15 +124,16 @@ export default function RoomLayout({
         };
       }
 
-      // 2. Check if there is a public confirmed booking
-      if (activeWebsiteStays[i]) {
+      // 2. Check if there is a public website booking for this slot or matching room
+      const webBooking = activeWebsiteStays.find(b => b.roomNumber === roomNum) || activeWebsiteStays[i];
+      if (webBooking) {
         return {
           number: roomNum,
           status: 'booked',
-          paymentMode: 'gpay', // default for online bookings
+          paymentMode: 'gpay', // User requested: website bookings reflect as Website and GPay (Blue)
           bookingChannel: 'website' as const,
           sourceText: 'GPAY · WEBSITE',
-          guestName: activeWebsiteStays[i].name
+          guestName: webBooking.name
         };
       }
 
@@ -224,7 +225,7 @@ export default function RoomLayout({
       bookings.filter(
         b =>
           b.place === placeId &&
-          b.status === 'confirmed' &&
+          b.status !== 'cancelled' &&
           b.floor === fId &&
           selectedDate >= b.arrival &&
           selectedDate < b.departure

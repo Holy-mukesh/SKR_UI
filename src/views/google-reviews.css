@@ -1,0 +1,218 @@
+/* =========================================================================
+   GOOGLE MAPS REVIEWS & REDIRECT CALLOUTS
+   Luxury Gold & Ink styling for Google Maps rating showcase
+   ========================================================================= */
+
+.gmaps-showcase {
+  margin: clamp(40px, 6vw, 72px) 0;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.gmaps-showcase__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 16px;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 18px;
+}
+
+.gmaps-showcase__title {
+  font-family: var(--serif);
+  font-size: clamp(26px, 3.2vw, 42px);
+  font-weight: 300;
+  color: var(--ivory);
+  line-height: 1.1;
+}
+
+.gmaps-showcase__title em {
+  font-style: italic;
+  background: var(--gold-grad);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.gmaps-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: clamp(16px, 2.5vw, 28px);
+}
+
+@media (max-width: 900px) {
+  .gmaps-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.gmaps-card {
+  background: rgba(20, 17, 12, 0.7);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 24px 22px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 18px;
+  position: relative;
+  transition: transform 0.4s var(--ease), border-color 0.4s var(--ease), box-shadow 0.4s var(--ease);
+  backdrop-filter: blur(8px);
+}
+
+.gmaps-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--gold);
+  box-shadow: 0 12px 32px rgba(212, 166, 74, 0.15);
+}
+
+.gmaps-card__top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.gmaps-card__badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+
+.gmaps-card__g-icon {
+  width: 18px;
+  height: 18px;
+  flex: none;
+}
+
+.gmaps-card__rating {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.gmaps-card__score {
+  font-family: var(--serif);
+  font-size: 26px;
+  color: var(--ivory);
+  line-height: 1;
+}
+
+.gmaps-card__venue-name {
+  font-family: var(--serif);
+  font-size: 22px;
+  font-weight: 400;
+  color: var(--ivory);
+  margin-top: 4px;
+}
+
+.gmaps-card__quote {
+  font-size: 14px;
+  line-height: 1.6;
+  color: rgba(239, 230, 210, 0.85);
+  font-style: italic;
+  margin: 6px 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.gmaps-card__author {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.gmaps-card__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 11px 16px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  color: var(--gold-light) !important;
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  text-decoration: none !important;
+  transition: background 0.3s, border-color 0.3s, color 0.3s;
+  background: rgba(212, 166, 74, 0.05);
+}
+
+.gmaps-card__btn:hover {
+  background: var(--gold);
+  border-color: var(--gold);
+  color: var(--black) !important;
+}
+
+.gmaps-card__btn i {
+  font-style: normal;
+  transition: transform 0.3s var(--ease);
+}
+
+.gmaps-card__btn:hover i {
+  transform: translateX(4px);
+}
+
+/* Write review on Google Maps action block */
+.gmaps-write-cta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding: 24px 28px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background:
+    radial-gradient(ellipse 60% 80% at 100% 50%, rgba(212, 166, 74, 0.12), transparent 70%),
+    linear-gradient(180deg, rgba(20, 17, 12, 0.7), rgba(8, 7, 6, 0.9));
+  margin-top: 14px;
+}
+
+.gmaps-write-cta__info h3 {
+  font-family: var(--serif);
+  font-size: 22px;
+  font-weight: 400;
+  color: var(--ivory);
+}
+
+.gmaps-write-cta__info p {
+  font-size: 13px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+.gmaps-write-cta__buttons {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.gmaps-write-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  border: 1px solid var(--gold);
+  border-radius: 4px;
+  color: var(--gold-light) !important;
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  text-decoration: none !important;
+  transition: all 0.3s;
+}
+
+.gmaps-write-btn:hover {
+  background: var(--gold);
+  color: var(--black) !important;
+  box-shadow: 0 4px 14px rgba(212, 166, 74, 0.3);
+}
