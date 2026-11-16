@@ -1919,7 +1919,7 @@ main { position: relative; z-index: 2; pointer-events: none; }
   display: grid;
   grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
   gap: clamp(40px, 6vw, 120px);
-  align-items: end;
+  align-items: center;
   padding-bottom: var(--section);
 }
 .rhero__write {

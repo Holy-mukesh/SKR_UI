@@ -1,201 +1,338 @@
 /* =========================================================================
    GOOGLE MAPS REVIEWS & REDIRECT CALLOUTS
-   Luxury Gold & Ink styling for Google Maps rating showcase
+   Default White Google Theme & Luxury Redirection Layout
    ========================================================================= */
 
-.gmaps-showcase {
-  margin: clamp(40px, 6vw, 72px) 0;
+/* =========================================================================
+   HERO RIGHT SIDE: BounceCards area for Google Maps Reviews
+   ========================================================================= */
+
+.rhero__bounce {
   display: flex;
   flex-direction: column;
-  gap: 28px;
-}
-
-.gmaps-showcase__header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-end;
-  flex-wrap: wrap;
+  align-items: center;
   gap: 16px;
-  border-bottom: 1px solid var(--line);
-  padding-bottom: 18px;
+  justify-self: center;
+  position: relative;
 }
 
-.gmaps-showcase__title {
-  font-family: var(--serif);
-  font-size: clamp(26px, 3.2vw, 42px);
-  font-weight: 300;
-  color: var(--ivory);
-  line-height: 1.1;
+.rhero__bounce-hint {
+  font-size: 11px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--gold-light, #e2c082);
+  text-align: center;
+  margin-top: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
 }
 
-.gmaps-showcase__title em {
-  font-style: italic;
-  background: var(--gold-grad);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+.rhero__bounce-hint svg {
+  flex: none;
 }
 
-.gmaps-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: clamp(16px, 2.5vw, 28px);
-}
-
-@media (max-width: 900px) {
-  .gmaps-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
-.gmaps-card {
-  background: rgba(20, 17, 12, 0.7);
-  border: 1px solid var(--line);
-  border-radius: 8px;
+/* Bounce card individual Google review card layout - Default White Google Theme */
+.gcard-bounce {
+  width: 100%;
+  height: 100%;
   padding: 24px 22px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  gap: 18px;
+  box-sizing: border-box;
+  background: #ffffff;
+  color: #202124;
+  user-select: none;
   position: relative;
-  transition: transform 0.4s var(--ease), border-color 0.4s var(--ease), box-shadow 0.4s var(--ease);
-  backdrop-filter: blur(8px);
+  overflow: hidden;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+  border-radius: 16px;
 }
 
-.gmaps-card:hover {
-  transform: translateY(-4px);
-  border-color: var(--gold);
-  box-shadow: 0 12px 32px rgba(212, 166, 74, 0.15);
-}
-
-.gmaps-card__top {
+.gcard-bounce__top {
   display: flex;
+  align-items: center;
   justify-content: space-between;
-  align-items: flex-start;
-  gap: 12px;
+  gap: 10px;
 }
 
-.gmaps-card__badge {
+.gcard-bounce__badge {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  font-size: 11px;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--gold);
+  gap: 7px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #3c4043;
+  letter-spacing: -0.01em;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Google Sans', sans-serif;
 }
 
-.gmaps-card__g-icon {
+.gcard-bounce__g-icon {
   width: 18px;
   height: 18px;
   flex: none;
 }
 
-.gmaps-card__rating {
-  display: flex;
+.gcard-bounce__stars {
+  display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 4px;
+  color: #fbbc04; /* Google star yellow */
 }
 
-.gmaps-card__score {
-  font-family: var(--serif);
-  font-size: 26px;
-  color: var(--ivory);
-  line-height: 1;
+.gcard-bounce__stars .stars {
+  display: inline-flex;
+  gap: 2px;
 }
 
-.gmaps-card__venue-name {
-  font-family: var(--serif);
-  font-size: 22px;
-  font-weight: 400;
-  color: var(--ivory);
-  margin-top: 4px;
+.gcard-bounce__stars .star {
+  width: 15px;
+  height: 15px;
+  color: #fbbc04;
 }
 
-.gmaps-card__quote {
-  font-size: 14px;
+.gcard-bounce__rating-num {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 13.5px;
+  color: #202124;
+  font-weight: 700;
+  margin-left: 2px;
+}
+
+.gcard-bounce__venue {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-top: 6px;
+}
+
+.gcard-bounce__venue-name {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-size: 17px;
+  font-weight: 600;
+  color: #202124;
+  line-height: 1.2;
+}
+
+.gcard-bounce__venue-loc {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #5f6368;
+}
+
+.gcard-bounce__text {
+  font-size: 13px;
   line-height: 1.6;
-  color: rgba(239, 230, 210, 0.85);
-  font-style: italic;
-  margin: 6px 0;
+  color: #3c4043;
+  font-style: normal;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  margin: 8px 0;
   display: -webkit-box;
   -webkit-line-clamp: 4;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
 
-.gmaps-card__author {
-  font-size: 12px;
-  color: var(--muted);
-}
-
-.gmaps-card__btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  padding: 11px 16px;
-  border: 1px solid var(--line);
-  border-radius: 4px;
-  color: var(--gold-light) !important;
-  font-size: 11px;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  text-decoration: none !important;
-  transition: background 0.3s, border-color 0.3s, color 0.3s;
-  background: rgba(212, 166, 74, 0.05);
-}
-
-.gmaps-card__btn:hover {
-  background: var(--gold);
-  border-color: var(--gold);
-  color: var(--black) !important;
-}
-
-.gmaps-card__btn i {
-  font-style: normal;
-  transition: transform 0.3s var(--ease);
-}
-
-.gmaps-card__btn:hover i {
-  transform: translateX(4px);
-}
-
-/* Write review on Google Maps action block */
-.gmaps-write-cta {
+.gcard-bounce__bottom {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 16px;
-  padding: 24px 28px;
+  padding-top: 12px;
+  border-top: 1px solid #f1f3f4;
+  gap: 8px;
+}
+
+.gcard-bounce__author {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.gcard-bounce__avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 600;
+  flex: none;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.gcard-bounce__author-name {
+  display: block;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #202124;
+  line-height: 1.25;
+}
+
+.gcard-bounce__date {
+  display: block;
+  font-size: 11px;
+  color: #70757a;
+}
+
+.gcard-bounce__link {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: #1a73e8;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 14px;
+  border-radius: 20px;
+  background: #f1f3f4;
+  border: 1px solid #dadce0;
+  transition: all 0.2s ease;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.bounce-cards__card[data-active] .gcard-bounce__link,
+.bounce-cards__card:hover .gcard-bounce__link {
+  background: #1a73e8;
+  color: #ffffff;
+  border-color: #1a73e8;
+  box-shadow: 0 2px 8px rgba(26, 115, 232, 0.4);
+}
+
+@media (max-width: 900px) {
+  .rhero__bounce .bounce-cards {
+    width: 340px !important;
+    height: 300px !important;
+    --bounce-cards-width: 280px !important;
+    --bounce-cards-height: 260px !important;
+  }
+}
+
+@media (max-width: 600px) {
+  .rhero__bounce .bounce-cards {
+    width: 300px !important;
+    height: 280px !important;
+    --bounce-cards-width: 260px !important;
+    --bounce-cards-height: 250px !important;
+  }
+}
+
+/* =========================================================================
+   GOOGLE MAPS REDIRECT FORM (replaces on-site review form)
+   ========================================================================= */
+
+.write--gmaps {
+  margin-top: clamp(48px, 6vw, 96px) !important;
+  margin-bottom: clamp(64px, 8vw, 128px) !important;
+}
+
+.gmaps-redirect-form {
+  flex: 1;
+  min-width: 300px;
+}
+
+.gmaps-redirect-form__inner {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: clamp(24px, 3.5vw, 40px);
   border: 1px solid var(--line);
   border-radius: 8px;
   background:
-    radial-gradient(ellipse 60% 80% at 100% 50%, rgba(212, 166, 74, 0.12), transparent 70%),
-    linear-gradient(180deg, rgba(20, 17, 12, 0.7), rgba(8, 7, 6, 0.9));
-  margin-top: 14px;
+    radial-gradient(ellipse 70% 80% at 100% 0%, rgba(212, 166, 74, 0.1), transparent 70%),
+    linear-gradient(180deg, rgba(20, 17, 12, 0.85), rgba(8, 7, 6, 0.7));
 }
 
-.gmaps-write-cta__info h3 {
+.gmaps-redirect-form__label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.gmaps-redirect-form__eyebrow {
+  font-size: 11px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+
+.gmaps-redirect-form__select {
+  appearance: none;
+  width: 100%;
+  padding: 14px 16px;
+  font-size: 16px;
   font-family: var(--serif);
-  font-size: 22px;
-  font-weight: 400;
+  color: var(--ivory);
+  background: rgba(30, 26, 20, 0.9);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: border-color 0.3s;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%23d4a64a' stroke-width='1.5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+}
+
+.gmaps-redirect-form__select:focus {
+  outline: none;
+  border-color: var(--gold);
+}
+
+.gmaps-redirect-form__select option {
+  background: #1a1612;
   color: var(--ivory);
 }
 
-.gmaps-write-cta__info p {
+.gmaps-redirect-form__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  padding: 18px 24px;
+  background: var(--gold);
+  border: none;
+  border-radius: 6px;
+  color: var(--black) !important;
+  text-decoration: none !important;
   font-size: 13px;
-  color: var(--muted);
-  margin-top: 2px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: transform 0.3s var(--ease), box-shadow 0.3s var(--ease), background 0.3s;
 }
 
-.gmaps-write-cta__buttons {
+.gmaps-redirect-form__btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(212, 166, 74, 0.35);
+  background: #e6b84d;
+}
+
+.gmaps-redirect-form__btn i {
+  font-style: normal;
+  font-size: 16px;
+  transition: transform 0.3s var(--ease);
+}
+
+.gmaps-redirect-form__btn:hover i {
+  transform: translate(3px, -3px);
+}
+
+.gmaps-redirect-form__quick {
   display: flex;
   gap: 10px;
   flex-wrap: wrap;
+  padding-top: 8px;
+  border-top: 1px solid var(--line);
 }
 
+/* Write review on Google Maps quick buttons */
 .gmaps-write-btn {
   display: inline-flex;
   align-items: center;

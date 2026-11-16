@@ -23,10 +23,53 @@ const stamp = (iso: string) =>
     minute: '2-digit'
   });
 
+// Extract YYYY-MM-DD cleanly
+const toYMD = (val: string) => {
+  if (!val) return '';
+  if (val.length === 10) return val;
+  try {
+    const d = new Date(val);
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const dayNum = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${dayNum}`;
+  } catch {
+    return val.substring(0, 10);
+  }
+};
+
 export default function Insights({ reservations = [], bookings = [], onDeleteReservation }: InsightsProps) {
   const [filterPlace, setFilterPlace] = useState('all');
   const [filterChannel, setFilterChannel] = useState('all');
   const [filterPayment, setFilterPayment] = useState('all');
+
+  // Optional Date Range Filters
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [dateMode, setDateMode] = useState<'stay' | 'booked'>('stay');
+
+  // Quick preset helper
+  const applyPreset = (preset: 'today' | 'month' | 'all') => {
+    const now = new Date();
+    const y = now.getFullYear();
+    const m = String(now.getMonth() + 1).padStart(2, '0');
+    const d = String(now.getDate()).padStart(2, '0');
+
+    if (preset === 'today') {
+      const todayStr = `${y}-${m}-${d}`;
+      setStartDate(todayStr);
+      setEndDate(todayStr);
+    } else if (preset === 'month') {
+      const firstDay = `${y}-${m}-01`;
+      const lastDayNum = new Date(y, now.getMonth() + 1, 0).getDate();
+      const lastDay = `${y}-${m}-${String(lastDayNum).padStart(2, '0')}`;
+      setStartDate(firstDay);
+      setEndDate(lastDay);
+    } else {
+      setStartDate('');
+      setEndDate('');
+    }
+  };
 
   // Floor index helper for room number calculation if missing on website bookings
   const floorIndexMap: Record<string, number> = {
@@ -88,34 +131,49 @@ export default function Insights({ reservations = [], bookings = [], onDeleteRes
     return list.sort((a, b) => b.created.localeCompare(a.created));
   }, [reservations, bookings]);
 
-  // Filter list
+  // Filter list by place, channel, payment, and optional date range
   const filtered = useMemo(() => {
     return unifiedList.filter(r => {
       if (filterPlace !== 'all' && r.place !== filterPlace) return false;
       if (filterChannel !== 'all' && r.bookingChannel !== filterChannel) return false;
       if (filterPayment !== 'all' && r.paymentMode !== filterPayment) return false;
+
+      // Optional date range filtering
+      if (startDate || endDate) {
+        if (dateMode === 'stay') {
+          const arr = toYMD(r.arrival);
+          const dep = toYMD(r.departure);
+          if (startDate && dep < startDate) return false;
+          if (endDate && arr > endDate) return false;
+        } else {
+          const booked = toYMD(r.created);
+          if (startDate && booked < startDate) return false;
+          if (endDate && booked > endDate) return false;
+        }
+      }
+
       return true;
     });
-  }, [unifiedList, filterPlace, filterChannel, filterPayment]);
+  }, [unifiedList, filterPlace, filterChannel, filterPayment, startDate, endDate, dateMode]);
 
-  // Aggregate metrics
+  // Aggregate metrics (reflects current filters / date range)
   const totals = useMemo(() => {
-    const totalRevenue = unifiedList.reduce((s, r) => s + (Number(r.total) || 0), 0);
-    const cashTotal = unifiedList
+    const totalRevenue = filtered.reduce((s, r) => s + (Number(r.total) || 0), 0);
+    const cashTotal = filtered
       .filter(r => r.paymentMode === 'cash')
       .reduce((s, r) => s + (Number(r.total) || 0), 0);
-    const gpayTotal = unifiedList
+    const gpayTotal = filtered
       .filter(r => r.paymentMode === 'gpay')
       .reduce((s, r) => s + (Number(r.total) || 0), 0);
-    const cardTotal = unifiedList
+    const cardTotal = filtered
       .filter(r => r.paymentMode === 'card')
       .reduce((s, r) => s + (Number(r.total) || 0), 0);
 
-    const inPersonCount = unifiedList.filter(r => r.bookingChannel === 'in_person').length;
-    const websiteCount = unifiedList.filter(r => r.bookingChannel === 'website').length;
+    const inPersonCount = filtered.filter(r => r.bookingChannel === 'in_person').length;
+    const websiteCount = filtered.filter(r => r.bookingChannel === 'website').length;
 
     return {
-      count: unifiedList.length,
+      count: filtered.length,
       totalRevenue,
       cashTotal,
       gpayTotal,
@@ -123,13 +181,13 @@ export default function Insights({ reservations = [], bookings = [], onDeleteRes
       inPersonCount,
       websiteCount
     };
-  }, [unifiedList]);
+  }, [filtered]);
 
   return (
     <>
       <div className="adm-head">
         <h1 className="adm-h1">
-          Hospitality Insights <span className="adm-muted">({unifiedList.length})</span>
+          Hospitality Insights <span className="adm-muted">({filtered.length} of {unifiedList.length})</span>
         </h1>
       </div>
       <p className="adm-muted adm-lead">
@@ -143,7 +201,7 @@ export default function Insights({ reservations = [], bookings = [], onDeleteRes
           <span className="adm-stat__value" style={{ color: '#d4a64a' }}>
             {rupees(totals.totalRevenue)}
           </span>
-          <span className="adm-muted">{totals.count} Total Reservation{totals.count === 1 ? '' : 's'}</span>
+          <span className="adm-muted">{totals.count} Reservation{totals.count === 1 ? '' : 's'}</span>
         </div>
         <div className="adm-stat">
           <span className="adm-stat__label">GPay UPI (Website &amp; Desk)</span>
@@ -168,8 +226,8 @@ export default function Insights({ reservations = [], bookings = [], onDeleteRes
         </div>
       </div>
 
-      {/* Filters */}
-      <div className="adm-filters">
+      {/* Primary Filters (Place, Channel, Payment) */}
+      <div className="adm-filters" style={{ marginBottom: '12px' }}>
         <select value={filterPlace} onChange={e => setFilterPlace(e.target.value)} aria-label="Filter place">
           <option value="all">All Places</option>
           {venues.map(v => (
@@ -181,8 +239,8 @@ export default function Insights({ reservations = [], bookings = [], onDeleteRes
 
         <select value={filterChannel} onChange={e => setFilterChannel(e.target.value)} aria-label="Filter channel">
           <option value="all">All Channels (Website &amp; In-Person)</option>
-          <option value="website">🌐 Website ({totals.websiteCount})</option>
-          <option value="in_person">👤 In Person ({totals.inPersonCount})</option>
+          <option value="website">🌐 Website ({unifiedList.filter(x => x.bookingChannel === 'website').length})</option>
+          <option value="in_person">👤 In Person ({unifiedList.filter(x => x.bookingChannel === 'in_person').length})</option>
         </select>
 
         <select value={filterPayment} onChange={e => setFilterPayment(e.target.value)} aria-label="Filter payment">
@@ -191,6 +249,114 @@ export default function Insights({ reservations = [], bookings = [], onDeleteRes
           <option value="cash">💵 Cash</option>
           <option value="card">💳 Card</option>
         </select>
+      </div>
+
+      {/* Optional Date Range Filter Bar */}
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '12px',
+          flexWrap: 'wrap',
+          padding: '12px 16px',
+          background: 'rgba(212, 166, 74, 0.05)',
+          border: '1px solid rgba(212, 166, 74, 0.2)',
+          borderRadius: '8px',
+          marginBottom: '20px'
+        }}
+      >
+        <span style={{ fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--gold)', fontWeight: 600 }}>
+          Date Range (Optional):
+        </span>
+
+        <label style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: 'var(--muted)' }}>
+          <span>From:</span>
+          <input
+            type="date"
+            value={startDate}
+            onChange={e => setStartDate(e.target.value)}
+            style={{
+              padding: '6px 10px',
+              fontSize: '12px',
+              borderRadius: '4px',
+              background: 'rgba(255, 255, 255, 0.07)',
+              border: '1px solid var(--line)',
+              color: 'var(--ivory)',
+              colorScheme: 'dark'
+            }}
+          />
+        </label>
+
+        <label style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: 'var(--muted)' }}>
+          <span>To:</span>
+          <input
+            type="date"
+            value={endDate}
+            onChange={e => setEndDate(e.target.value)}
+            style={{
+              padding: '6px 10px',
+              fontSize: '12px',
+              borderRadius: '4px',
+              background: 'rgba(255, 255, 255, 0.07)',
+              border: '1px solid var(--line)',
+              color: 'var(--ivory)',
+              colorScheme: 'dark'
+            }}
+          />
+        </label>
+
+        <select
+          value={dateMode}
+          onChange={e => setDateMode(e.target.value as 'stay' | 'booked')}
+          style={{
+            padding: '6px 10px',
+            fontSize: '12px',
+            borderRadius: '4px',
+            background: 'rgba(255, 255, 255, 0.07)',
+            border: '1px solid var(--line)',
+            color: 'var(--ivory)'
+          }}
+          aria-label="Date filter type"
+        >
+          <option value="stay">Filter by Stay Dates</option>
+          <option value="booked">Filter by Booked Date</option>
+        </select>
+
+        {/* Quick Presets */}
+        <div style={{ display: 'inline-flex', gap: '6px', alignItems: 'center' }}>
+          <button
+            type="button"
+            className="adm-btn"
+            onClick={() => applyPreset('today')}
+            style={{ padding: '4px 10px', fontSize: '11px', textTransform: 'uppercase' }}
+          >
+            Today
+          </button>
+          <button
+            type="button"
+            className="adm-btn"
+            onClick={() => applyPreset('month')}
+            style={{ padding: '4px 10px', fontSize: '11px', textTransform: 'uppercase' }}
+          >
+            This Month
+          </button>
+          {(startDate || endDate) && (
+            <button
+              type="button"
+              className="adm-btn"
+              onClick={() => applyPreset('all')}
+              style={{
+                padding: '4px 10px',
+                fontSize: '11px',
+                textTransform: 'uppercase',
+                borderColor: 'rgba(212, 166, 74, 0.45)',
+                color: 'var(--gold)'
+              }}
+            >
+              Clear Dates ✕
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Reservations Table */}

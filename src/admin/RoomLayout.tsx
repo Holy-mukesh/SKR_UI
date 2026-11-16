@@ -497,44 +497,7 @@ export default function RoomLayout({
             </div>
           </div>
 
-          {/* Canvas Legend */}
-          <div className="rl-legend" style={{ marginTop: '16px' }}>
-            <span style={{ fontWeight: 600, color: '#1a1816' }}>STATUS:</span>
-            <div className="rl-legend__item">
-              <span className="rl-legend__dot rl-legend__dot--available" />
-              <span>Available</span>
-            </div>
-            <div className="rl-legend__item">
-              <span className="rl-legend__dot rl-legend__dot--selected" />
-              <span>Selected</span>
-            </div>
-            <div className="rl-legend__item">
-              <span className="rl-legend__dot rl-legend__dot--maintenance" />
-              <span>Maintenance</span>
-            </div>
 
-            <span style={{ marginLeft: '12px', fontWeight: 600, color: '#1a1816' }}>PAYMENT COLOR:</span>
-            <div className="rl-legend__item">
-              <span className="rl-legend__dot rl-legend__dot--cash" />
-              <span>💵 Cash (Green)</span>
-            </div>
-            <div className="rl-legend__item">
-              <span className="rl-legend__dot rl-legend__dot--gpay" />
-              <span>📱 GPay (Blue)</span>
-            </div>
-            <div className="rl-legend__item">
-              <span className="rl-legend__dot rl-legend__dot--card" />
-              <span>💳 Card (Purple)</span>
-            </div>
-
-            <span style={{ marginLeft: '12px', fontWeight: 600, color: '#1a1816' }}>CHANNEL:</span>
-            <div className="rl-legend__item">
-              <span>👤 In person</span>
-            </div>
-            <div className="rl-legend__item">
-              <span>🌐 Website</span>
-            </div>
-          </div>
         </div>
 
         {/* RIGHT COLUMN: Walk-In / Front Desk Booking Sidebar */}

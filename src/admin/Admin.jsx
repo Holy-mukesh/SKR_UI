@@ -208,7 +208,7 @@ function Dashboard({ user, onSignedOut }) {
           <Link href="/admin" className={subpath === '' ? 'active' : undefined}>Overview</Link>
           <Link href="/admin/bookings" className={subpath === 'bookings' ? 'active' : undefined}>Bookings{fresh > 0 && <b className="adm-badge">{fresh}</b>}</Link>
           <Link href="/admin/room-layout" className={subpath === 'room-layout' ? 'active' : undefined}>Room Layout</Link>
-          <Link href="/admin/insights" className={subpath === 'insights' ? 'active' : undefined}>Insights{reservations?.length > 0 && <b className="adm-badge" style={{ background: '#34a853' }}>{reservations.length}</b>}</Link>
+          <Link href="/admin/insights" className={subpath === 'insights' ? 'active' : undefined}>Insights</Link>
           <Link href="/admin/availability" className={subpath === 'availability' ? 'active' : undefined}>Availability</Link>
           <Link href="/admin/reviews" className={subpath === 'reviews' ? 'active' : undefined}>Reviews</Link>
         </nav>
