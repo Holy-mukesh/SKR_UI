@@ -239,3 +239,14 @@
 .adm-avail__day.is-full { background: rgba(226, 110, 90, 0.28); }
 .adm-avail__day.is-out { opacity: 0.35; }
 .adm-block-form { display: grid; gap: 14px; }
+
+/* Who is signed in, beside the Sign out button */
+.adm-who {
+  align-self: center;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #d4a64a;
+  padding: 0 6px;
+  white-space: nowrap;
+}

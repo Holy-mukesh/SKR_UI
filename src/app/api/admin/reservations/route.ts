@@ -1,20 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { randomUUID } from 'node:crypto';
-import { verifyAdmin } from '@/lib/server/auth';
+import { verifyAdmin, canAccess } from '@/lib/server/auth';
 import { getStore, withPlaceLock } from '@/lib/server/store';
 import { assertFree, roomsInUse, text } from '@/lib/server/validation';
 import type { FrontDeskReservation } from '@/types';
 
 export async function GET(request: NextRequest) {
-  if (!verifyAdmin(request)) {
+  const user = await verifyAdmin(request);
+  if (!user) {
     return NextResponse.json({ error: 'Please sign in.' }, { status: 401 });
   }
   const store = getStore();
-  return NextResponse.json(await store.reservations.all());
+  return NextResponse.json(await store.reservations.all(user.place ?? undefined));
 }
 
 export async function POST(request: NextRequest) {
-  if (!verifyAdmin(request)) {
+  const user = await verifyAdmin(request);
+  if (!user) {
     return NextResponse.json({ error: 'Please sign in.' }, { status: 401 });
   }
 
@@ -46,6 +48,9 @@ export async function POST(request: NextRequest) {
       total = 2625
     } = body || {};
 
+    if (!canAccess(user, place)) {
+      return NextResponse.json({ error: 'You can only add reservations at your own property.' }, { status: 403 });
+    }
     if (!name?.trim()) {
       return NextResponse.json({ error: 'Please enter guest name.' }, { status: 400 });
     }

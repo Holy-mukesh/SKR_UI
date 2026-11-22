@@ -1,23 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import {
-  ADMIN_USERNAME,
-  ADMIN_PASSWORD,
-  getClientIp,
-  loginLimit,
-  safeCompare,
-  createSessionToken,
-  SESSION_COOKIE,
-  SESSION_HOURS
-} from '@/lib/server/auth';
+import { getClientIp, loginLimit, login, createSession, SESSION_COOKIE, SESSION_HOURS } from '@/lib/server/auth';
 
 export async function POST(request: NextRequest) {
-  if (!ADMIN_USERNAME || !ADMIN_PASSWORD) {
-    return NextResponse.json(
-      { error: 'Admin login is not set up on the server (ADMIN_USERNAME / ADMIN_PASSWORD).' },
-      { status: 503 }
-    );
-  }
-
   const ip = getClientIp(request);
   try {
     loginLimit.check(ip);
@@ -32,18 +16,16 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid JSON.' }, { status: 400 });
   }
 
-  const { username, password } = body || {};
-  const ok = [safeCompare(username ?? '', ADMIN_USERNAME), safeCompare(password ?? '', ADMIN_PASSWORD)].every(Boolean);
-
-  if (!ok) {
+  const user = await login(body?.username ?? '', body?.password ?? '');
+  if (!user) {
     loginLimit.hit(ip);
     return NextResponse.json({ error: 'Wrong username or password.' }, { status: 401 });
   }
 
   loginLimit.clear(ip);
-  const token = createSessionToken();
+  const token = await createSession(user.username);
 
-  const response = NextResponse.json({ username: ADMIN_USERNAME });
+  const response = NextResponse.json(user);
   response.cookies.set({
     name: SESSION_COOKIE,
     value: token,
@@ -53,6 +35,5 @@ export async function POST(request: NextRequest) {
     maxAge: SESSION_HOURS * 3600,
     secure: process.env.NODE_ENV === 'production'
   });
-
   return response;
 }

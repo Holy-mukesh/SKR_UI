@@ -1,19 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { randomUUID } from 'node:crypto';
-import { verifyAdmin } from '@/lib/server/auth';
+import { verifyAdmin, canAccess } from '@/lib/server/auth';
 import { getStore, withPlaceLock } from '@/lib/server/store';
 import { parseStay, assertFree, text } from '@/lib/server/validation';
 
 export async function GET(request: NextRequest) {
-  if (!verifyAdmin(request)) {
+  const user = await verifyAdmin(request);
+  if (!user) {
     return NextResponse.json({ error: 'Please sign in.' }, { status: 401 });
   }
   const store = getStore();
-  return NextResponse.json(await store.blocks.all());
+  return NextResponse.json(await store.blocks.all(user.place ?? undefined));
 }
 
 export async function POST(request: NextRequest) {
-  if (!verifyAdmin(request)) {
+  const user = await verifyAdmin(request);
+  if (!user) {
     return NextResponse.json({ error: 'Please sign in.' }, { status: 401 });
   }
 
@@ -26,6 +28,9 @@ export async function POST(request: NextRequest) {
 
   try {
     const { venue, unit, arrival, departure, rooms } = parseStay(body);
+    if (!canAccess(user, venue.id)) {
+      return NextResponse.json({ error: 'You can only block rooms at your own property.' }, { status: 403 });
+    }
     const block = {
       id: randomUUID(),
       place: venue.id,

@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { venues, rupees } from '../data/venues';
+import { rupees } from '../data/venues';
 import { addDays, nightsBetween } from '../lib/stay';
 import type { FrontDeskReservation } from '../types';
+import { useAdminVenues } from './scope';
 import './room-layout.css';
 
 interface RoomLayoutProps {
@@ -19,8 +20,11 @@ export default function RoomLayout({
   onBookSuccess,
   onError
 }: RoomLayoutProps) {
-  // Selected place (defaults to Aarapalayam hotel from reference image)
-  const [placeId, setPlaceId] = useState('arapalayam');
+  // Only the properties this admin manages; starts on Aarapalayam when allowed
+  const venues = useAdminVenues();
+  const [placeId, setPlaceId] = useState(() =>
+    venues.some(v => v.id === 'arapalayam') ? 'arapalayam' : venues[0].id
+  );
 
   // Selected Date (defaults to today)
   const todayStr = useMemo(() => {
@@ -31,8 +35,11 @@ export default function RoomLayout({
 
   const venue = useMemo(() => venues.find(v => v.id === placeId) || venues[0], [placeId]);
 
-  // Selected floor (defaults to second floor)
-  const [floorId, setFloorId] = useState<string>('second');
+  // Selected floor (second floor when the place has one, else its first floor)
+  const [floorId, setFloorId] = useState<string>(() => {
+    const v = venues.find(x => x.id === placeId) || venues[0];
+    return v.inventory.some(f => f.id === 'second') ? 'second' : v.inventory[0].id;
+  });
 
   // Currently selected room number (null/empty initially so all rooms show in available color)
   const [selectedRoomNumber, setSelectedRoomNumber] = useState<string>('');

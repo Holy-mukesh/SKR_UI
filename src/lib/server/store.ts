@@ -27,13 +27,14 @@ export interface StoreInstance {
 function connect(): postgres.Sql<{}> {
   const url = process.env.DATABASE_URL;
   if (!url) throw new Error('DATABASE_URL is not set. Add your Neon connection string to .env.');
-  // prepare: false keeps it working through Neon's pooled (-pooler) connection string
-  return postgres(url, { ssl: 'require', max: 5, prepare: false, idle_timeout: 20 });
+  // prepare: false keeps it working through Neon's pooled (-pooler) connection string.
+  // Opening a connection to Neon takes seconds from India, so keep them open for 10 minutes once made.
+  return postgres(url, { ssl: 'require', max: 10, prepare: false, idle_timeout: 600, onnotice: () => {} });
 }
 
 // One connection pool per server process (survives Next.js hot reloads in dev)
 const g = globalThis as any;
-const db = (): postgres.Sql<{}> => (g.__skrSql ||= connect());
+export const db = (): postgres.Sql<{}> => (g.__skrSql ||= connect());
 
 function collection<T extends { id: string; place?: string }>(sql: Sql, table: Table): Collection<T> {
   const t = sql(table);

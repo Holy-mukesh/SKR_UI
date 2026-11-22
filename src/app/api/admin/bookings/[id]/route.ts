@@ -1,14 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyAdmin } from '@/lib/server/auth';
+import { verifyAdmin, canAccess } from '@/lib/server/auth';
 import { getStore, withPlaceLock } from '@/lib/server/store';
 import { STATUSES, assertFree, assignRooms } from '@/lib/server/validation';
 
 export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  if (!verifyAdmin(request)) {
+  const user = await verifyAdmin(request);
+  if (!user) {
     return NextResponse.json({ error: 'Please sign in.' }, { status: 401 });
   }
   const { id } = await params;
   const store = getStore();
+  const item = await store.bookings.get(id);
+  if (item && !canAccess(user, item.place)) {
+    return NextResponse.json({ error: 'This record belongs to another property.' }, { status: 403 });
+  }
   if (!(await store.bookings.remove(id))) {
     return NextResponse.json({ error: 'Already deleted.' }, { status: 404 });
   }
@@ -16,7 +21,8 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
 }
 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  if (!verifyAdmin(request)) {
+  const user = await verifyAdmin(request);
+  if (!user) {
     return NextResponse.json({ error: 'Please sign in.' }, { status: 401 });
   }
   const { id } = await params;
@@ -36,6 +42,9 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
   const current = await store.bookings.get(id);
   if (!current) {
     return NextResponse.json({ error: 'Booking not found.' }, { status: 404 });
+  }
+  if (!canAccess(user, current.place)) {
+    return NextResponse.json({ error: 'This record belongs to another property.' }, { status: 403 });
   }
 
   let updated;

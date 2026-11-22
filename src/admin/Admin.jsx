@@ -7,12 +7,14 @@ import { addDays, findUnit, freeByNight, nightsBetween, unitKey } from '../lib/s
 import { Stars } from '../components/Stars';
 import RoomLayout from './RoomLayout';
 import Insights from './Insights';
+import { AdminContext, scopeFor, useAdminVenues } from './scope';
 import './admin.css';
 
 /*
   Admin dashboard at /admin.
-  Sign-in is checked by the server (ADMIN_USERNAME / ADMIN_PASSWORD in .env); the session lives in an
-  HttpOnly cookie, so nothing secret is stored in the browser. Every change goes straight to the server,
+  Sign-in is checked by the server against the admins table (scripts/db.mjs admin …); the session lives in an
+  HttpOnly cookie, so nothing secret is stored in the browser. A property admin only sees their own property;
+  the superadmin sees all three. Every change goes straight to the server,
   so it shows on the public site for everyone.
 */
 
@@ -29,20 +31,24 @@ const todayISO = () => {
 };
 
 export default function Admin() {
-  const [user, setUser] = useState(undefined); // undefined: checking, null: signed out
+  const [user, setUser] = useState(undefined); // undefined: checking, null: signed out, else { username, place }
 
   useEffect(() => {
     const title = document.title;
     document.title = 'Admin · SKR Sivabhagya';
     const robots = Object.assign(document.createElement('meta'), { name: 'robots', content: 'noindex, nofollow' });
     document.head.append(robots);
-    api('/admin/session').then(s => setUser(s.username)).catch(() => setUser(null));
+    api('/admin/session').then(s => setUser(s)).catch(() => setUser(null));
     return () => { document.title = title; robots.remove(); };
   }, []);
 
   if (user === undefined) return <div className="adm adm--center"><p className="adm-muted">Loading…</p></div>;
   if (!user) return <Login onSignedIn={setUser} />;
-  return <Dashboard user={user} onSignedOut={() => setUser(null)} />;
+  return (
+    <AdminContext.Provider value={scopeFor(user)}>
+      <Dashboard user={user} onSignedOut={() => setUser(null)} />
+    </AdminContext.Provider>
+  );
 }
 
 /* ---------- Sign in ---------- */
@@ -59,7 +65,7 @@ function Login({ onSignedIn }) {
     setError('');
     try {
       const s = await api('/admin/login', { method: 'POST', body: { username, password } });
-      onSignedIn(s.username);
+      onSignedIn(s);
     } catch (err) {
       setError(err.message);
       setPassword('');
@@ -215,7 +221,10 @@ function Dashboard({ user, onSignedOut }) {
         <div className="adm-top__end">
           <button className="adm-btn" onClick={refresh} disabled={loading}>{loading ? 'Refreshing…' : 'Refresh'}</button>
           <a href="/" className="adm-btn" target="_blank" rel="noreferrer">View site</a>
-          <button className="adm-btn" onClick={signOut} title={`Signed in as ${user}`}>Sign out</button>
+          <span className="adm-who" title={`Signed in as ${user.username}`}>
+            {user.place ? `${placeName(user.place)} admin` : 'Superadmin'}
+          </span>
+          <button className="adm-btn" onClick={signOut} title={`Signed in as ${user.username}`}>Sign out</button>
         </div>
       </header>
 
@@ -318,6 +327,7 @@ function Overview({ reviews, bookings }) {
 /* ---------- Bookings ---------- */
 
 function Bookings({ bookings, onStatus, onDelete }) {
+  const venues = useAdminVenues();
   const [status, setStatus] = useState('all');
   const [location, setLocation] = useState('all');
   const [query, setQuery] = useState('');
@@ -331,21 +341,10 @@ function Bookings({ bookings, onStatus, onDelete }) {
     );
   }, [bookings, status, location, query]);
 
-  const exportCsv = () => {
-    const cols = ['Received', 'Name', 'Phone', 'Email', 'Location', 'Floor', 'Room', 'Rooms', 'Arrival', 'Departure', 'Nights', 'Guests', 'Estimate (₹)', 'Status', 'Note'];
-    const cell = v => `"${String(v ?? '').replace(/"/g, '""')}"`;
-    const rows = shown.map(b => [b.createdAt, b.name, b.phone, b.email, b.location, b.floorName, b.roomName, b.rooms, b.arrival, b.departure, nights(b), b.guests, b.estimate?.total, b.status, b.note]);
-    const csv = '﻿' + [cols, ...rows].map(r => r.map(cell).join(',')).join('\r\n');
-    const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
-    Object.assign(document.createElement('a'), { href: url, download: `skr-bookings-${todayISO()}.csv` }).click();
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
-  };
-
   return (
     <>
       <div className="adm-head">
         <h1 className="adm-h1">Booking requests <span className="adm-muted">({bookings.length})</span></h1>
-        <button className="adm-btn" onClick={exportCsv} disabled={!shown.length}>Download CSV</button>
       </div>
 
       <div className="adm-filters">
@@ -417,6 +416,7 @@ function Bookings({ bookings, onStatus, onDelete }) {
 const MONTH_DAYS = 42;
 
 function Availability({ bookings, blocks, reservations = [], onAdd, onDelete }) {
+  const venues = useAdminVenues();
   const [placeId, setPlaceId] = useState(venues[0].id);
   const venue = venues.find(v => v.id === placeId);
   const units = venue.inventory.flatMap(f => venue.rooms.filter(r => f.rooms[r.id]).map(r => ({ floor: f, room: r, count: f.rooms[r.id] })));
@@ -575,6 +575,7 @@ function Availability({ bookings, blocks, reservations = [], onAdd, onDelete }) 
 /* ---------- Reviews ---------- */
 
 function Reviews({ reviews, onDelete }) {
+  const venues = useAdminVenues();
   const [place, setPlace] = useState('all');
   const [rating, setRating] = useState('all');
 

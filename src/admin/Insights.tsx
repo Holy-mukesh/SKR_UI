@@ -1,5 +1,32 @@
 import React, { useMemo, useState } from 'react';
-import { venues, rupees } from '../data/venues';
+import { rupees } from '../data/venues';
+import { useAdmin, useAdminVenues } from './scope';
+
+const CHANNEL_LABEL: Record<string, string> = { website: 'Website', in_person: 'In person' };
+const PAYMENT_LABEL: Record<string, string> = { cash: 'Cash', gpay: 'GPay', card: 'Card' };
+
+/* One CSV cell: quoted, with quotes doubled. Values starting with = + - @ are prefixed so Excel
+   never runs a guest-typed name as a formula. */
+/* A value Excel must keep as text, e.g. a phone number (keeps leading 0 and +91) */
+const asText = (v: unknown) => ({ text: String(v ?? '') });
+
+const csvCell = (v: unknown) => {
+  if (v && typeof v === 'object' && 'text' in v) {
+    // ="…" makes Excel show the exact characters; the value sits inside a string, so it can't run as a formula
+    return `"=""${String((v as { text: string }).text).replace(/"/g, '""""')}"""`;
+  }
+  let s = String(v ?? '');
+  if (/^[=+\-@]/.test(s)) s = `'${s}`;
+  return `"${s.replace(/"/g, '""')}"`;
+};
+
+/* Save text as a file in the browser (BOM first so Excel reads ₹ and Tamil names correctly) */
+function downloadCsv(lines: unknown[][], filename: string) {
+  const csv = '﻿' + lines.map(r => r.map(csvCell).join(',')).join('\r\n');
+  const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+  Object.assign(document.createElement('a'), { href: url, download: filename }).click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
 import type { FrontDeskReservation } from '../types';
 
 interface InsightsProps {
@@ -39,6 +66,8 @@ const toYMD = (val: string) => {
 };
 
 export default function Insights({ reservations = [], bookings = [], onDeleteReservation }: InsightsProps) {
+  const venues = useAdminVenues();
+  const { user } = useAdmin();
   const [filterPlace, setFilterPlace] = useState('all');
   const [filterChannel, setFilterChannel] = useState('all');
   const [filterPayment, setFilterPayment] = useState('all');
@@ -183,12 +212,66 @@ export default function Insights({ reservations = [], bookings = [], onDeleteRes
     };
   }, [filtered]);
 
+  /*
+    Report of exactly what is on screen (same place, channel, payment and date filters).
+    The server only sends a property admin their own property's records, so their report can't hold anyone else's.
+  */
+  const downloadReport = () => {
+    const placeLabel = (id: string) => venues.find(v => v.id === id)?.booking ?? id;
+    const scope = filterPlace !== 'all' ? placeLabel(filterPlace) : venues.length === 1 ? venues[0].booking : 'All properties';
+    const range = startDate || endDate
+      ? `${startDate ? day(startDate) : 'start'} to ${endDate ? day(endDate) : 'today'} (by ${dateMode === 'stay' ? 'stay dates' : 'booking date'})`
+      : 'All dates';
+    const today = new Date();
+    const ymd = toYMD(today.toISOString());
+
+    const lines: unknown[][] = [
+      ['SKR Sivabhagya — Insights report'],
+      ['Property', scope],
+      ['Dates', range],
+      ['Channel', filterChannel === 'all' ? 'All' : CHANNEL_LABEL[filterChannel] ?? filterChannel],
+      ['Payment', filterPayment === 'all' ? 'All' : PAYMENT_LABEL[filterPayment] ?? filterPayment],
+      ['Generated', `${today.toLocaleString('en-IN')} by ${user?.username ?? 'admin'}`],
+      [],
+      ['Summary'],
+      ['Reservations', totals.count],
+      ['In person', totals.inPersonCount],
+      ['Website', totals.websiteCount],
+      ['Total revenue (₹)', totals.totalRevenue],
+      ['Cash (₹)', totals.cashTotal],
+      ['GPay (₹)', totals.gpayTotal],
+      ['Card (₹)', totals.cardTotal],
+      [],
+      ['Booked on', 'Guest', 'Phone', 'Property', 'Floor', 'Room type', 'Room no.', 'Arrival', 'Departure', 'Nights',
+        'Channel', 'Payment', 'Status', 'Rate / night (₹)', 'Subtotal (₹)', 'GST (₹)', 'Total (₹)'],
+      ...filtered.map(r => [
+        toYMD(r.created), r.name, asText(r.phone), placeLabel(r.place), r.floorName, r.roomName, r.roomNumber,
+        r.arrival, r.departure, r.nights,
+        CHANNEL_LABEL[r.bookingChannel] ?? r.bookingChannel, PAYMENT_LABEL[r.paymentMode] ?? r.paymentMode,
+        r.isFrontDesk ? 'Front desk' : r.status ?? '',
+        r.ratePerNight, r.subtotal, r.gst, r.total
+      ])
+    ];
+
+    const slug = scope.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    const datePart = startDate || endDate ? `${startDate || 'start'}_to_${endDate || ymd}` : ymd;
+    downloadCsv(lines, `skr-report_${slug}_${datePart}.csv`);
+  };
+
   return (
     <>
       <div className="adm-head">
         <h1 className="adm-h1">
           Hospitality Insights <span className="adm-muted">({filtered.length} of {unifiedList.length})</span>
         </h1>
+        <button
+          className="adm-btn"
+          onClick={downloadReport}
+          disabled={!filtered.length}
+          title="Download the reservations shown below, with their totals, as a spreadsheet (CSV)"
+        >
+          Download report
+        </button>
       </div>
       <p className="adm-muted adm-lead">
         Unified overview of bookings from the <b>Website (GPay)</b> and <b>In Person Front-Desk</b> reservations with full payment &amp; revenue breakdown.
