@@ -1,7 +1,7 @@
 import Page from '../components/Page';
 import PageHeader from '../components/PageHeader';
 import Locations from '../components/Locations';
-import Reserve from '../components/Reserve';
+import ReserveCta from '../components/ReserveCta';
 import Backdrop from '../components/Backdrop';
 import Stack from '../components/Stack';
 import { venues } from '../data/venues';
@@ -48,7 +48,7 @@ export default function Places() {
           }
         />
         <Locations showHead={false} />
-        <Reserve />
+        <ReserveCta />
       </Page>
     </>
   );

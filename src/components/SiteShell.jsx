@@ -128,7 +128,7 @@ export default function SiteShell({ children }) {
     }
     if (busy.current) return;
 
-    const dest = url.pathname + url.hash;
+    const dest = url.pathname + url.search + url.hash;
     if (reduceMotion) {
       router.push(dest);
       return;

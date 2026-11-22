@@ -3,7 +3,7 @@ import { gsap, useGSAP, reduceMotion } from '../motion';
 import Footer from './Footer';
 
 /* Every page: content that scrolls over the backdrop, the shared heading reveals, and the footer */
-export default function Page({ hero = false, className = '', children }) {
+export default function Page({ hero = false, footer = true, className = '', children }) {
   const ref = useRef(null);
 
   useGSAP(() => {
@@ -31,7 +31,7 @@ export default function Page({ hero = false, className = '', children }) {
       {hero && <section className="hero" aria-label="Welcome" />}
       <div className="content">
         {children}
-        <Footer />
+        {footer && <Footer />}
       </div>
     </main>
   );

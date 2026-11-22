@@ -23,12 +23,14 @@ const layoutFor = (width, viewHeight) => {
 export default function Gallery({ venue }) {
   const { openLightbox } = useSite();
   const ref = useRef(null);
-  const [screen, setScreen] = useState(() => ({ width: window.innerWidth, height: window.innerHeight }));
+  // Measured in the browser only (the wall shuffles photos and sizes to the window, so it isn't rendered on the server)
+  const [screen, setScreen] = useState(null);
   const { photos } = venue;
 
   useEffect(() => {
     // the wall runs edge to edge, so the window size is the size that matters
     const onResize = () => setScreen({ width: window.innerWidth, height: window.innerHeight });
+    onResize();
     addEventListener('resize', onResize);
     return () => removeEventListener('resize', onResize);
   }, []);
@@ -37,7 +39,7 @@ export default function Gallery({ venue }) {
     () => photos.map((p, index) => ({ image: p.thumb, title: p.alt, index })),
     [photos]
   );
-  const { height, ...size } = layoutFor(screen.width, screen.height);
+  const { height, ...size } = layoutFor(screen?.width ?? 1440, screen?.height ?? 900);
 
   useGSAP(() => {
     if (reduceMotion) return;
@@ -55,7 +57,7 @@ export default function Gallery({ venue }) {
       </div>
 
       <div className="gallery__wall" style={{ height }}>
-        <DriftWall
+        {screen && <DriftWall
           items={items}
           {...size}
           tilt={16}
@@ -73,7 +75,7 @@ export default function Gallery({ venue }) {
           radius={10}
           label={`${venue.name} photographs`}
           onItemClick={item => openLightbox(venue.id, item.index)}
-        />
+        />}
       </div>
 
       <button className="gallery__more" onClick={() => openLightbox(venue.id, 0)}>

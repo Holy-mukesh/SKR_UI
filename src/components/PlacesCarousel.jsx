@@ -82,7 +82,7 @@ export default function PlacesCarousel() {
       <div className="pcar__body">
         <span className="pcar__type">{v.num} · {v.type}</span>
         <h3 className="pcar__name">{v.name}</h3>
-        <p className="pcar__desc">{v.desc}</p>
+        <p className="pcar__desc">{v.teaser ?? v.desc}</p>
         <SiteLink to={placePath(v.id)} className="pcar__go" tabIndex={role === 'out' ? -1 : undefined}>Explore</SiteLink>
       </div>
     </article>

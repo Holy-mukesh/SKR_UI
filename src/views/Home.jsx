@@ -7,7 +7,7 @@ import PlacesCarousel from '../components/PlacesCarousel';
 import Statement from '../components/Statement';
 import Nearby from '../components/Nearby';
 import Invite from '../components/Invite';
-import Reserve from '../components/Reserve';
+import ReserveCta from '../components/ReserveCta';
 
 export default function Home({ introPending, onIntroDone }) {
   // Decided once per mount, so coming back to Home later doesn't replay the intro
@@ -23,7 +23,7 @@ export default function Home({ introPending, onIntroDone }) {
         <PlacesCarousel />
         <Nearby />
         <Invite />
-        <Reserve />
+        <ReserveCta />
       </Page>
     </>
   );

@@ -5,13 +5,13 @@ import { venues } from '../data/venues';
 import Page from '../components/Page';
 import Venue from '../components/Venue';
 import Locations from '../components/Locations';
-import Reserve from '../components/Reserve';
+import ReserveCta from '../components/ReserveCta';
 import Backdrop from '../components/Backdrop';
 
 function PlacePage({ venue }) {
   const { setLocation } = useSite();
 
-  // The booking form on this page starts on this place
+  // Booking links on this page (and the WhatsApp button) start on this place
   useEffect(() => setLocation(venue.booking), [venue, setLocation]);
 
   return (
@@ -20,7 +20,7 @@ function PlacePage({ venue }) {
       <Page className={venue.backdrop ? 'page--backdrop' : ''}>
         <Venue venue={venue} />
         <Locations exclude={venue.id} eyebrow="Also from Sivabhagya" lines={['Our other', <em>addresses.</em>]} />
-        <Reserve />
+        <ReserveCta venue={venue} />
       </Page>
     </>
   );

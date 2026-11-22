@@ -106,6 +106,7 @@ export interface Venue {
   booking: string;
   cover: VenueCover;
   desc: string;
+  teaser?: string; // short version for the home page carousel (falls back to desc)
   stats: [string, string][];
   facts: [string, string][];
   floors?: [string, string][];

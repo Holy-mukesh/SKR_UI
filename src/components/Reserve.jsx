@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from 'react';
-import { usePathname } from 'next/navigation';
 import { gsap, useGSAP, reduceMotion } from '../motion';
 import { useSite } from '../site';
 import { venues, rupees } from '../data/venues';
@@ -31,9 +30,8 @@ function Stepper({ label, note, value, min, max, onChange }) {
   );
 }
 
-export default function Reserve() {
+export default function Reserve({ placeChosen = false, bare = false }) {
   const ref = useRef(null);
-  const pathname = usePathname();
   const { location, setLocation, setStay } = useSite();
   const venue = venues.find(v => v.booking === location) ?? venues[0];
   const multiFloor = venue.inventory.length > 1;
@@ -50,10 +48,10 @@ export default function Reserve() {
   const [availAll, setAvailAll] = useState({}); // place id → { from, free } (or { error })
   // Dates come first everywhere; on a place's own page the place is already chosen too
   // On a place's own page the place is already chosen, so start one step in
-  const [open, setOpen] = useState(() => (pathname?.startsWith('/places/') ? (multiFloor ? 'floor' : 'room') : 'place'));
+  const [open, setOpen] = useState(() => (placeChosen ? (multiFloor ? 'floor' : 'room') : 'place'));
   const [datesOpen, setDatesOpen] = useState(false); // the date drop-down above the steps
   const datesRef = useRef(null);
-  const [touched, setTouched] = useState(() => new Set(pathname?.startsWith('/places/') ? ['place'] : []));
+  const [touched, setTouched] = useState(() => new Set(placeChosen ? ['place'] : []));
   // Floor and room stay blank until the guest picks them (a one-floor place has its floor settled)
   const [roomPicked, setRoomPicked] = useState(false);
   const floorPicked = !multiFloor || touched.has('floor');
@@ -329,10 +327,11 @@ export default function Reserve() {
   }, { scope: ref, dependencies: [at], revertOnUpdate: false });
 
   return (
-    <section className="reserve" id="reserve" ref={ref}>
+    <section className={`reserve${bare ? ' reserve--page' : ''}`} id="reserve" ref={ref}>
       <div className="reserve__glow" aria-hidden="true" />
-      <p className="eyebrow">Reservations</p>
-      <Lines className="display display--xl" lines={['Your stay,', <em>awaits.</em>]} />
+      {/* bare: the /reserve page shows only the form, sized to the screen */}
+      {!bare && <p className="eyebrow">Reservations</p>}
+      {!bare && <Lines className="display display--xl" lines={['Your stay,', <em>awaits.</em>]} />}
 
       <form className="rv" noValidate onSubmit={submit}>
         {/* The place, in pictures, with the running folio */}

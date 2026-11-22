@@ -69,7 +69,7 @@ export default function Venue({ venue }) {
             ))}
           </dl>
           <div className="venue__actions">
-            <SiteLink to="#reserve" location={venue.booking} className="link-gold">Reserve here</SiteLink>
+            <SiteLink to={`/reserve?place=${venue.id}`} location={venue.booking} className="link-gold">Reserve here</SiteLink>
             <a href={venue.directions} target="_blank" rel="noopener" className="link-quiet">Directions</a>
           </div>
         </div>
@@ -112,7 +112,7 @@ export default function Venue({ venue }) {
           <p className="rates__note">
             Current rates at {venue.name}. Send a request below and our desk will call you to confirm availability.
           </p>
-          <SiteLink to="#reserve" location={venue.booking} className="link-gold">Reserve a room</SiteLink>
+          <SiteLink to={`/reserve?place=${venue.id}`} location={venue.booking} className="link-gold">Reserve a room</SiteLink>
         </div>
 
         <ol className="tariff">

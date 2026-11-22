@@ -28,6 +28,7 @@ export const venues = [
     booking: 'Kodaikanal',
     cover: { src: '/assets/gallery/kodaikanal/cover.webp', wide: '/assets/gallery/kodaikanal/cover-wide.webp', home: '/assets/gallery/kodaikanal/home-wide.webp', homeWhole: true, alt: 'Aerial view of the Kodaikanal resort on a wooded hilltop, with the Kodaikanal Hills and clouds beyond' },
     desc: 'SKR SIVABHAGYA, nestled atop a hill in Villpatti, Kodaikanal, offers breathtaking 360° panoramic views. Just a 15-minute drive from Kodaikanal Lake, it promises an exceptional mountain retreat. Experience world-class comfort in our elegant rooms and luxurious suites. Watch the mist embrace the hills as the skies feel beautifully within reach. Reconnect with nature through scenic treks across nearby valleys and hilltops. Begin your day with a wholesome breakfast at our restaurant. End it with a specially curated menu featuring delightful local favourites.',
+    teaser: 'A hilltop retreat in Vilpatti with 360° views over the Kodaikanal hills — 15 minutes from the lake, with misty mornings, scenic treks and our own restaurant.',
     stats: [['10', 'Rooms'], ['G + 2', 'Floors'], ['₹6,000', 'Rooms from']],
     facts: [
       ['Setting', 'Hillside at Vilpatti, with panoramic valley views'],
@@ -65,6 +66,7 @@ export const venues = [
     booking: 'Madurai — Aarapalayam',
     cover: { src: '/assets/gallery/arapalayam/cover.webp', wide: '/assets/gallery/arapalayam/cover-wide.webp', home: '/assets/gallery/arapalayam/home-wide.webp', alt: 'Entrance to the restaurant at the Aarapalayam hotel, with a brass lamp and chandelier' },
     desc: 'In the heart of the temple city, minutes from the Meenakshi Amman Temple — a business class hotel of dark wood, warm light and quiet rooms, made for rest after a long day.',
+    teaser: 'In the heart of Madurai, minutes from the Meenakshi Amman Temple — a business class hotel of dark wood, warm light and quiet rooms.',
     stats: [['40', 'Rooms'], ['G + 4', 'Floors'], ['₹1,900', 'Rooms from']],
     facts: [
       ['Amenities', 'Restaurant, coffee shop, conference hall, Wi-Fi'],

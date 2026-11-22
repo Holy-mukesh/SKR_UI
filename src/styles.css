@@ -733,6 +733,13 @@ main { position: relative; z-index: 2; pointer-events: none; }
   font-size: clamp(15px, 1.15vw, 17px);
   line-height: 1.6;
   color: #5b544a;
+  /* every card gets the same 3-line text block, so all three places are the same size */
+  height: calc(3 * 1.6em);
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  overflow: hidden;
 }
 .pcar__go {
   margin-top: 14px;
@@ -2926,4 +2933,39 @@ main { position: relative; z-index: 2; pointer-events: none; }
 
 @media (prefers-reduced-motion: reduce) {
   .grain, .hero__shine { animation: none; }
+}
+
+/* Invitation to the /reserve page (Home and the Places pages) */
+.reserve-cta {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  text-align: center;
+  padding: clamp(72px, 12vw, 140px) 16px;
+}
+.reserve-cta .display { margin: 0; }
+.reserve-cta__text { max-width: 34rem; margin: 0; opacity: 0.8; }
+
+/* /reserve page: just the booking form, filling the first screen below the fixed nav */
+.reserve--page {
+  min-height: 100svh;
+  display: flex;
+  align-items: center;
+  padding: 92px var(--gutter) 16px;
+}
+.reserve--page .rv {
+  margin: 0 auto;
+  width: 100%;
+}
+/* Side by side: the photo panel matches the screen instead of its usual fixed 760px */
+@media (min-width: 961px) {
+  .reserve--page .rv__visual { min-height: max(560px, calc(100svh - 112px)); }
+  .reserve--page .rv__flow { padding-top: clamp(20px, 2.4vw, 32px); padding-bottom: 16px; }
+  .reserve--page .rv-dates { margin-bottom: 20px; }
+}
+
+/* Phones: narrower cards wrap more, so the carousel text block holds 5 lines */
+@media (max-width: 560px) {
+  .pcar__desc { height: calc(5 * 1.6em); -webkit-line-clamp: 5; line-clamp: 5; }
 }

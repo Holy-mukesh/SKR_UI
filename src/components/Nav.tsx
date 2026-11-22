@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
-import { PAGES, isActive, hasReserve } from '../data/pages';
+import { PAGES, isActive } from '../data/pages';
 import SiteLink from './SiteLink';
 
 interface NavProps {
@@ -26,8 +26,8 @@ export default function Nav({ menuOpen, setMenuOpen }: NavProps) {
     return () => removeEventListener('scroll', onScroll);
   }, [pathname]);
 
-  // The booking form lives on Home and the Places pages; elsewhere, Reserve takes you to Places
-  const reserveTo = hasReserve(pathname) ? '#reserve' : '/places#reserve';
+  // The booking form has its own page; on it, Reserve glides back up to the form
+  const reserveTo = pathname === '/reserve' ? '#reserve' : '/reserve';
   const links = PAGES.map(({ path, label }: any) => (
     <SiteLink key={path} to={path} className={isActive(path, pathname) ? 'is-active' : undefined} aria-current={pathname === path ? 'page' : undefined}>
       {label}
