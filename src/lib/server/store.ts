@@ -1,93 +1,84 @@
-import { mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
+import postgres from 'postgres';
 import type { Booking, Review, RoomBlock, FrontDeskReservation } from '@/types';
 
-interface StoreData {
-  reviews: Review[];
-  bookings: Booking[];
-  blocks: RoomBlock[];
-  reservations: FrontDeskReservation[];
-}
+/*
+  Records live in Neon Postgres (see db/schema.sql). Each table keeps the full record as JSON in `data`,
+  so API responses look exactly as they did with the old db.json file.
+*/
+
+type Sql = postgres.Sql<{}> | postgres.TransactionSql<{}>;
+type Table = 'bookings' | 'reservations' | 'blocks' | 'reviews';
 
 export interface Collection<T extends { id: string }> {
-  all: () => T[];
-  add: (item: T) => T;
-  update: (id: string, changes: Partial<T>) => T | null;
-  remove: (id: string) => boolean;
+  all: (place?: string) => Promise<T[]>;
+  get: (id: string) => Promise<T | null>;
+  add: (item: T) => Promise<T>;
+  update: (id: string, changes: Partial<T>) => Promise<T | null>;
+  remove: (id: string) => Promise<boolean>;
 }
 
 export interface StoreInstance {
-  file: string;
   reviews: Collection<Review>;
   bookings: Collection<Booking>;
   blocks: Collection<RoomBlock>;
   reservations: Collection<FrontDeskReservation>;
 }
 
-let globalStoreInstance: StoreInstance | null = null;
-
-export function openStore(dir = process.env.DATA_DIR || 'data'): StoreInstance {
-  if (globalStoreInstance) return globalStoreInstance;
-
-  const folder = dir || 'data';
-  const dataDir = join(process.cwd(), folder === 'data' ? 'data' : folder);
-  mkdirSync(dataDir, { recursive: true });
-  const file = join(dataDir, 'db.json');
-
-  let data: StoreData = { reviews: [], bookings: [], blocks: [], reservations: [] };
-  try {
-    const saved = JSON.parse(readFileSync(file, 'utf8'));
-    data = {
-      reviews: Array.isArray(saved.reviews) ? saved.reviews : [],
-      bookings: Array.isArray(saved.bookings) ? saved.bookings : [],
-      blocks: Array.isArray(saved.blocks) ? saved.blocks : [],
-      reservations: Array.isArray(saved.reservations) ? saved.reservations : []
-    };
-  } catch (err: any) {
-    if (err.code !== 'ENOENT') throw new Error(`Could not read ${file}: ${err.message}`);
-  }
-
-  const save = () => {
-    const tmp = `${file}.tmp`;
-    writeFileSync(tmp, JSON.stringify(data, null, 2));
-    renameSync(tmp, file);
-  };
-
-  const createCollection = <K extends keyof StoreData>(name: K): Collection<StoreData[K][number]> => ({
-    all: () => (data[name] || []) as any,
-    add(item: any) {
-      if (!data[name]) data[name] = [] as any;
-      (data[name] as any[]).unshift(item); // newest first
-      save();
-      return item;
-    },
-    update(id: string, changes: any) {
-      if (!data[name]) return null;
-      const item = (data[name] as any[]).find(x => x.id === id);
-      if (!item) return null;
-      Object.assign(item, changes);
-      save();
-      return item;
-    },
-    remove(id: string) {
-      if (!data[name]) return false;
-      const before = data[name].length;
-      data[name] = (data[name] as any[]).filter(x => x.id !== id) as any;
-      if (data[name].length === before) return false;
-      save();
-      return true;
-    }
-  });
-
-  globalStoreInstance = {
-    file,
-    reviews: createCollection('reviews') as Collection<Review>,
-    bookings: createCollection('bookings') as Collection<Booking>,
-    blocks: createCollection('blocks') as Collection<RoomBlock>,
-    reservations: createCollection('reservations') as Collection<FrontDeskReservation>
-  };
-
-  return globalStoreInstance;
+function connect(): postgres.Sql<{}> {
+  const url = process.env.DATABASE_URL;
+  if (!url) throw new Error('DATABASE_URL is not set. Add your Neon connection string to .env.');
+  // prepare: false keeps it working through Neon's pooled (-pooler) connection string
+  return postgres(url, { ssl: 'require', max: 5, prepare: false, idle_timeout: 20 });
 }
 
-export const getStore = (): StoreInstance => openStore();
+// One connection pool per server process (survives Next.js hot reloads in dev)
+const g = globalThis as any;
+const db = (): postgres.Sql<{}> => (g.__skrSql ||= connect());
+
+function collection<T extends { id: string; place?: string }>(sql: Sql, table: Table): Collection<T> {
+  const t = sql(table);
+  return {
+    async all(place) {
+      const rows = place
+        ? await sql`SELECT data FROM ${t} WHERE place = ${place} ORDER BY created_at DESC`
+        : await sql`SELECT data FROM ${t} ORDER BY created_at DESC`;
+      return rows.map(r => r.data as T);
+    },
+    async get(id) {
+      const [row] = await sql`SELECT data FROM ${t} WHERE id = ${id}`;
+      return row ? (row.data as T) : null;
+    },
+    async add(item) {
+      await sql`INSERT INTO ${t} (id, place, data) VALUES (${item.id}, ${item.place || ''}, ${sql.json(item as any)})`;
+      return item;
+    },
+    async update(id, changes) {
+      const [row] = await sql`UPDATE ${t} SET data = data || ${sql.json(changes as any)} WHERE id = ${id} RETURNING data`;
+      return row ? (row.data as T) : null;
+    },
+    async remove(id) {
+      const rows = await sql`DELETE FROM ${t} WHERE id = ${id} RETURNING id`;
+      return rows.length > 0;
+    }
+  };
+}
+
+const storeFor = (sql: Sql): StoreInstance => ({
+  reviews: collection<Review>(sql, 'reviews'),
+  bookings: collection<Booking>(sql, 'bookings'),
+  blocks: collection<RoomBlock>(sql, 'blocks'),
+  reservations: collection<FrontDeskReservation>(sql, 'reservations')
+});
+
+export const getStore = (): StoreInstance => storeFor(db());
+
+/*
+  Run `fn` in a transaction that holds a lock for one place, so two people booking the same
+  place at the same moment are checked and saved one after the other (no double bookings).
+*/
+export async function withPlaceLock<R>(place: string, fn: (store: StoreInstance) => Promise<R>): Promise<R> {
+  return (await db().begin(async tx => {
+    await tx`SELECT pg_advisory_xact_lock(hashtext(${'place:' + place}))`;
+    return fn(storeFor(tx));
+  })) as R;
+}

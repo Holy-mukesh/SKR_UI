@@ -15,6 +15,8 @@ export interface Booking {
   notes?: string;
   // Extended fields
   roomNumber?: string;
+  roomNumbers?: string[]; // assigned when confirmed, one per room booked
+  rooms?: number;
   bookingChannel?: 'website' | 'in_person';
   paymentMode?: 'cash' | 'gpay' | 'card' | 'pending';
   totalAmount?: number;

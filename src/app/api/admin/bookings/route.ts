@@ -7,5 +7,5 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Please sign in.' }, { status: 401 });
   }
   const store = getStore();
-  return NextResponse.json(store.bookings.all());
+  return NextResponse.json(await store.bookings.all());
 }

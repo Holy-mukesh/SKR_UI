@@ -8,5 +8,5 @@ export async function GET(request: NextRequest) {
   if (!venue) {
     return NextResponse.json({ error: 'Unknown place.' }, { status: 400 });
   }
-  return NextResponse.json(getAvailability(venue));
+  return NextResponse.json(await getAvailability(venue));
 }

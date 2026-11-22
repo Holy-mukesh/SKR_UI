@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { venues } from '../../data/venues';
-import { addDays, findUnit, freeByNight, freeForStay, nightsBetween, quote, todayIST, unitKey } from '../stay';
-import { getStore } from './store';
+import { addDays, findUnit, freeByNight, freeForStay, nightsBetween, overlaps, quote, roomNumbers, todayIST, unitKey } from '../stay';
+import { getStore, type StoreInstance } from './store';
 
 const placeIds = new Set(venues.map((v: any) => v.id));
 export const venueById = (id: string) => venues.find((v: any) => v.id === id);
@@ -88,27 +88,50 @@ export function parseBooking(body: any) {
   return booking;
 }
 
-export const takenAt = (placeId: string, skipId?: string | null) => {
-  const store = getStore();
-  const confirmedBookings = store.bookings.all().filter((b: any) => b.place === placeId && b.status === 'confirmed' && b.room && b.id !== skipId);
-  const blocks = store.blocks.all().filter((b: any) => b.place === placeId);
-  const reservations = (store.reservations ? store.reservations.all() : []).filter((r: any) => r.place === placeId && r.id !== skipId);
-
+export const takenAt = async (placeId: string, skipId?: string | null, store: StoreInstance = getStore()) => {
+  const [bookings, blocks, reservations] = await Promise.all([
+    store.bookings.all(placeId),
+    store.blocks.all(placeId),
+    store.reservations.all(placeId)
+  ]);
   return [
-    ...confirmedBookings,
+    ...bookings.filter((b: any) => b.status === 'confirmed' && b.room && b.id !== skipId),
     ...blocks,
-    ...reservations
+    ...reservations.filter((r: any) => r.id !== skipId)
   ];
 };
 
-export function getAvailability(venue: any, skipId?: string | null) {
+export async function getAvailability(venue: any, skipId?: string | null, store?: StoreInstance) {
   const from = todayIST();
-  return { from, days: WINDOW, free: freeByNight(venue, takenAt(venue.id, skipId), from, WINDOW) };
+  return { from, days: WINDOW, free: freeByNight(venue, await takenAt(venue.id, skipId, store), from, WINDOW) };
 }
 
-export function assertFree({ place, floor, room, rooms, arrival, departure }: any, skipId?: string | null, message?: string) {
-  const { from, free } = getAvailability(venueById(place), skipId);
+export async function assertFree({ place, floor, room, rooms, arrival, departure }: any, skipId?: string | null, message?: string, store?: StoreInstance) {
+  const { from, free } = await getAvailability(venueById(place), skipId, store);
   const nights = free[unitKey(floor, room)];
   const start = arrival < from ? from : arrival;
   if (departure > start && freeForStay(nights, from, start, departure) < rooms) throw new HttpError(409, message || 'Room not available.');
+}
+
+/* Room numbers already in use at a place during a stay (front-desk reservations and confirmed bookings) */
+export async function roomsInUse(stay: any, skipId: string | null, store: StoreInstance = getStore()) {
+  const [bookings, reservations] = await Promise.all([store.bookings.all(stay.place), store.reservations.all(stay.place)]);
+  const used = new Set<string>();
+  for (const r of reservations) if (r.id !== skipId && r.roomNumber && overlaps(r, stay)) used.add(r.roomNumber);
+  for (const b of bookings) {
+    if (b.id === skipId || b.status !== 'confirmed' || !overlaps(b, stay)) continue;
+    for (const n of b.roomNumbers || (b.roomNumber ? [b.roomNumber] : [])) used.add(n);
+  }
+  return used;
+}
+
+/* Pick free room numbers of the booked type and floor for a booking being confirmed */
+export async function assignRooms(booking: any, store: StoreInstance) {
+  const floor = venueById(booking.place)?.inventory.find((f: any) => f.id === booking.floor);
+  if (!floor) return [];
+  const used = await roomsInUse(booking, booking.id, store);
+  const free = roomNumbers(floor, booking.room).filter(n => !used.has(n));
+  const wanted = booking.rooms || 1;
+  if (free.length < wanted) throw new HttpError(409, 'No free room numbers left for this room type on these dates.');
+  return free.slice(0, wanted);
 }

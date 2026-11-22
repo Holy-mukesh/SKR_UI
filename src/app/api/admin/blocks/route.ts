@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { randomUUID } from 'node:crypto';
 import { verifyAdmin } from '@/lib/server/auth';
-import { getStore } from '@/lib/server/store';
+import { getStore, withPlaceLock } from '@/lib/server/store';
 import { parseStay, assertFree, text } from '@/lib/server/validation';
 
 export async function GET(request: NextRequest) {
@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Please sign in.' }, { status: 401 });
   }
   const store = getStore();
-  return NextResponse.json(store.blocks.all());
+  return NextResponse.json(await store.blocks.all());
 }
 
 export async function POST(request: NextRequest) {
@@ -37,13 +37,16 @@ export async function POST(request: NextRequest) {
       reason: text(body.note || body.reason, 200),
       created: new Date().toISOString()
     };
-    assertFree(
-      block,
-      null,
-      'Not enough free rooms on those dates — confirmed bookings or other blocks already take them.'
-    );
-    const store = getStore();
-    return NextResponse.json(store.blocks.add(block as any), { status: 201 });
+    const saved = await withPlaceLock(block.place, async store => {
+      await assertFree(
+        block,
+        null,
+        'Not enough free rooms on those dates — confirmed bookings or other blocks already take them.',
+        store
+      );
+      return store.blocks.add(block as any);
+    });
+    return NextResponse.json(saved, { status: 201 });
   } catch (err: any) {
     const status = err.status || 400;
     return NextResponse.json({ error: err.message }, { status });

@@ -58,3 +58,26 @@ export function freeForStay(nights, from, arrival, departure) {
   if (start < 0 || end > nights.length || end <= start) return 0;
   return Math.min(...nights.slice(start, end));
 }
+
+/*
+  Room numbers on a floor: first floor 101, 102…, second 201…, terrace 501…
+  Numbers run through the floor's room types in order (e.g. 2 suites = 201–202, then deluxe 203–206).
+  Pass roomId to get only that type's numbers.
+*/
+const FLOOR_NO = { first: 1, second: 2, third: 3, fourth: 4, terrace: 5, house: 1 };
+export const floorPrefix = floorId => (FLOOR_NO[floorId] || 1) * 100;
+
+export function roomNumbers(floor, roomId) {
+  let n = floorPrefix(floor.id);
+  const out = [];
+  for (const [id, count] of Object.entries(floor.rooms)) {
+    for (let i = 0; i < count; i++) {
+      n++;
+      if (!roomId || id === roomId) out.push(String(n));
+    }
+  }
+  return out;
+}
+
+/* Two stays overlap when each starts before the other ends */
+export const overlaps = (a, b) => a.arrival < b.departure && b.arrival < a.departure;

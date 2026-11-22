@@ -5,7 +5,7 @@ import { parseReview } from '@/lib/server/validation';
 
 export async function GET() {
   const store = getStore();
-  return NextResponse.json(store.reviews.all());
+  return NextResponse.json(await store.reviews.all());
 }
 
 export async function POST(request: NextRequest) {
@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
     const review = parseReview(body);
     reviewLimit.hit(ip);
     const store = getStore();
-    return NextResponse.json(store.reviews.add(review as any), { status: 201 });
+    return NextResponse.json(await store.reviews.add(review as any), { status: 201 });
   } catch (err: any) {
     const status = err.status || (err.message?.includes('Too many') ? 429 : 400);
     return NextResponse.json({ error: err.message }, { status });

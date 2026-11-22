@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { randomUUID } from 'node:crypto';
 import { verifyAdmin } from '@/lib/server/auth';
-import { getStore } from '@/lib/server/store';
-import { assertFree, text } from '@/lib/server/validation';
+import { getStore, withPlaceLock } from '@/lib/server/store';
+import { assertFree, roomsInUse, text } from '@/lib/server/validation';
 import type { FrontDeskReservation } from '@/types';
 
 export async function GET(request: NextRequest) {
@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Please sign in.' }, { status: 401 });
   }
   const store = getStore();
-  return NextResponse.json(store.reservations.all());
+  return NextResponse.json(await store.reservations.all());
 }
 
 export async function POST(request: NextRequest) {
@@ -76,7 +76,8 @@ export async function POST(request: NextRequest) {
     };
 
     // Verify room is free on these dates
-    assertFree(
+    const saved = await withPlaceLock(place, async store => {
+      await assertFree(
       {
         place,
         floor,
@@ -86,11 +87,15 @@ export async function POST(request: NextRequest) {
         departure
       },
       null,
-      `Room ${roomNumber} is already booked on these dates.`
-    );
-
-    const store = getStore();
-    const saved = store.reservations.add(reservation);
+      `Room ${roomNumber} is already booked on these dates.`,
+      store
+      );
+      const used = await roomsInUse({ place, arrival, departure }, null, store);
+      if (used.has(String(roomNumber))) {
+        throw Object.assign(new Error(`Room ${roomNumber} is already booked on these dates.`), { status: 409 });
+      }
+      return store.reservations.add(reservation);
+    });
     return NextResponse.json(saved, { status: 201 });
   } catch (err: any) {
     const status = err.status || 400;

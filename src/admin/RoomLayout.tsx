@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { venues, rupees } from '../data/venues';
 import { addDays, nightsBetween } from '../lib/stay';
 import type { FrontDeskReservation } from '../types';
@@ -46,6 +46,7 @@ export default function RoomLayout({
   const [checkOut, setCheckOut] = useState(addDays(todayStr, 2));
   const [submitting, setSubmitting] = useState(false);
   const [feedbackMsg, setFeedbackMsg] = useState('');
+  const [errorMsg, setErrorMsg] = useState('');
 
   // Find floor details
   const currentFloor = useMemo(() => {
@@ -89,11 +90,11 @@ export default function RoomLayout({
         selectedDate < r.departure
     );
 
-    // Check all active website bookings (new or confirmed, not cancelled)
+    // Confirmed website bookings staying tonight (new requests don't hold a room until confirmed)
     const activeWebsiteStays = bookings.filter(
       b =>
         b.place === placeId &&
-        b.status !== 'cancelled' &&
+        b.status === 'confirmed' &&
         b.floor === floorId &&
         selectedDate >= b.arrival &&
         selectedDate < b.departure
@@ -108,10 +109,18 @@ export default function RoomLayout({
         selectedDate < k.departure
     );
 
-    return Array.from({ length: totalRoomsOnFloor }, (_, i) => {
+    const webRoom = (b: any) => ({
+      status: 'booked' as const,
+      paymentMode: b.paymentMode && b.paymentMode !== 'pending' ? b.paymentMode : 'gpay',
+      bookingChannel: 'website' as const,
+      sourceText: `${(b.paymentMode && b.paymentMode !== 'pending' ? b.paymentMode : 'gpay').toUpperCase()} · WEBSITE`,
+      guestName: b.name
+    });
+
+    const list: any[] = Array.from({ length: totalRoomsOnFloor }, (_, i) => {
       const roomNum = `${prefix + i + 1}`;
 
-      // 1. Check if there is a front-desk reservation matching this room number
+      // 1. Front-desk reservation for this room number
       const fdRes = activeFrontDesk.find(r => r.roomNumber === roomNum);
       if (fdRes) {
         return {
@@ -124,42 +133,48 @@ export default function RoomLayout({
         };
       }
 
-      // 2. Check if there is a public website booking for this slot or matching room
-      const webBooking = activeWebsiteStays.find(b => b.roomNumber === roomNum) || activeWebsiteStays[i];
-      if (webBooking) {
-        return {
-          number: roomNum,
-          status: 'booked',
-          paymentMode: 'gpay', // User requested: website bookings reflect as Website and GPay (Blue)
-          bookingChannel: 'website' as const,
-          sourceText: 'GPAY · WEBSITE',
-          guestName: webBooking.name
-        };
-      }
+      // 2. Confirmed website booking assigned to this room number
+      const webBooking = activeWebsiteStays.find(b => (b.roomNumbers || []).includes(roomNum));
+      if (webBooking) return { number: roomNum, ...webRoom(webBooking) };
 
-      // 3. Check if under maintenance block
-      if (activeBlocks[i]) {
-        return {
-          number: roomNum,
-          status: 'maintenance' as const,
-          paymentMode: null,
-          bookingChannel: null,
-          sourceText: activeBlocks[i].reason || 'MAINTENANCE',
-          guestName: ''
-        };
-      }
-
-      // Default: Available
-      return {
-        number: roomNum,
-        status: 'available' as const,
-        paymentMode: null,
-        bookingChannel: null,
-        sourceText: 'AVAILABLE',
-        guestName: ''
-      };
+      return { number: roomNum, status: 'available' as const, paymentMode: null, bookingChannel: null, sourceText: 'AVAILABLE', guestName: '' };
     });
+
+    // 3. Older confirmed bookings without room numbers, then blocks, fill the next free rooms
+    const freeSlots = () => list.filter(r => r.status === 'available');
+    for (const b of activeWebsiteStays.filter(b => !b.roomNumbers?.length)) {
+      freeSlots().slice(0, b.rooms || 1).forEach(r => Object.assign(r, webRoom(b)));
+    }
+    for (const k of activeBlocks) {
+      freeSlots().slice(0, (k as any).rooms || 1).forEach(r =>
+        Object.assign(r, { status: 'maintenance', paymentMode: null, bookingChannel: null, sourceText: k.reason || 'MAINTENANCE', guestName: '' })
+      );
+    }
+    return list;
   }, [prefix, totalRoomsOnFloor, reservations, bookings, blocks, placeId, floorId, selectedDate]);
+
+  // Rooms on this floor already taken at some point between the form's check-in and check-out
+  const busyForStay = useMemo(() => {
+    const busy = new Map<string, string>();
+    if (!checkIn || !checkOut || checkOut <= checkIn) return busy;
+    const hits = (x: any) => x.place === placeId && x.floor === floorId && x.arrival < checkOut && checkIn < x.departure;
+    for (const r of reservations) if (hits(r) && r.roomNumber) busy.set(r.roomNumber, r.name);
+    for (const b of bookings) {
+      if (b.status !== 'confirmed' || !hits(b)) continue;
+      for (const n of b.roomNumbers || []) busy.set(n, b.name);
+    }
+    return busy;
+  }, [reservations, bookings, placeId, floorId, checkIn, checkOut]);
+
+  const selectedBusy = selectedRoomNumber ? busyForStay.get(selectedRoomNumber) : undefined;
+
+  // If new dates make the picked room unavailable, drop it so a free room is chosen instead
+  useEffect(() => {
+    if (selectedBusy !== undefined) {
+      setErrorMsg(`Room ${selectedRoomNumber} is already booked for these dates — pick a room that isn't greyed out.`);
+      setSelectedRoomNumber('');
+    }
+  }, [selectedBusy, selectedRoomNumber]);
 
   // Top metric numbers
   const metrics = useMemo(() => {
@@ -190,10 +205,11 @@ export default function RoomLayout({
     );
 
     const inPersonCount = activeFrontDesk.filter(r => r.bookingChannel === 'in_person').length;
-    const websiteCount =
-      activeFrontDesk.filter(r => r.bookingChannel === 'website').length + confirmedStays.length;
-    const maintCount = maintenanceBlocks.length;
-    const takenCount = activeFrontDesk.length + confirmedStays.length + maintCount;
+    const roomsOf = (x: any) => x.rooms || 1;
+    const confirmedRooms = confirmedStays.reduce((n, b) => n + roomsOf(b), 0);
+    const websiteCount = activeFrontDesk.filter(r => r.bookingChannel === 'website').length + confirmedRooms;
+    const maintCount = maintenanceBlocks.reduce((n, k) => n + roomsOf(k), 0);
+    const takenCount = activeFrontDesk.length + confirmedRooms + maintCount;
     const availableCount = Math.max(0, totalVenueRooms - takenCount);
 
     return {
@@ -222,33 +238,84 @@ export default function RoomLayout({
       reservations.filter(
         r => r.place === placeId && r.floor === fId && selectedDate >= r.arrival && selectedDate < r.departure
       ).length +
-      bookings.filter(
-        b =>
-          b.place === placeId &&
-          b.status !== 'cancelled' &&
-          b.floor === fId &&
-          selectedDate >= b.arrival &&
-          selectedDate < b.departure
-      ).length +
-      blocks.filter(
-        k => k.place === placeId && k.floor === fId && selectedDate >= k.arrival && selectedDate < k.departure
-      ).length;
+      bookings
+        .filter(
+          b =>
+            b.place === placeId &&
+            b.status === 'confirmed' &&
+            b.floor === fId &&
+            selectedDate >= b.arrival &&
+            selectedDate < b.departure
+        )
+        .reduce((n, b) => n + (b.rooms || 1), 0) +
+      blocks
+        .filter(k => k.place === placeId && k.floor === fId && selectedDate >= k.arrival && selectedDate < k.departure)
+        .reduce((n, k: any) => n + (k.rooms || 1), 0);
     return Math.max(0, floorTotal - taken);
+  };
+
+  // One room card. Rooms already booked during the form's dates are greyed out and can't be picked.
+  const renderRoom = (room: any) => {
+    const isSelected = selectedRoomNumber === room.number;
+    const takenBy = room.status === 'available' ? busyForStay.get(room.number) : undefined;
+    let cardClass = 'rl-room';
+    let label = room.sourceText;
+    if (takenBy !== undefined) {
+      cardClass += ' rl-room--unavailable';
+      label = 'BOOKED FOR THESE DATES';
+    } else if (isSelected) {
+      cardClass += ' rl-room--selected';
+      label = 'SELECTED';
+    } else if (room.status === 'booked' && room.paymentMode) {
+      cardClass += ` rl-room--${room.paymentMode}`; // cash | gpay | card
+    } else if (room.status === 'maintenance') {
+      cardClass += ' rl-room--maintenance';
+    } else {
+      cardClass += ' rl-room--available';
+    }
+    const guest = takenBy ?? (isSelected ? '' : room.guestName);
+
+    return (
+      <div
+        key={room.number}
+        className={cardClass}
+        aria-disabled={takenBy !== undefined}
+        title={takenBy !== undefined ? `Booked between ${checkIn} and ${checkOut}` : undefined}
+        onClick={() => {
+          if (takenBy === undefined) {
+            setSelectedRoomNumber(room.number);
+            setErrorMsg('');
+          }
+        }}
+      >
+        <div className="rl-room__slot" />
+        <div className="rl-room__top">
+          <span className="rl-room__number">{room.number}</span>
+          {room.bookingChannel === 'website' && <span className="rl-room__badge">🌐</span>}
+          {room.bookingChannel === 'in_person' && <span className="rl-room__badge">👤</span>}
+        </div>
+        <div className="rl-room__status-text">{label}</div>
+        {guest && (
+          <div style={{ fontSize: '11px', color: '#1a1816', fontWeight: 600, marginTop: '2px' }}>{guest}</div>
+        )}
+      </div>
+    );
   };
 
   // Submit Front Desk reservation directly to Insights (/api/admin/reservations)
   const handleConfirmBooking = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedRoomNumber) {
-      alert('Please tap a room on the floor layout to select it.');
+      setErrorMsg('Please tap a room on the floor layout to select it.');
       return;
     }
     if (!guestName.trim()) {
-      alert('Please enter guest name.');
+      setErrorMsg('Please enter guest name.');
       return;
     }
     setSubmitting(true);
     setFeedbackMsg('');
+    setErrorMsg('');
 
     try {
       const res = await fetch('/api/admin/reservations', {
@@ -284,8 +351,9 @@ export default function RoomLayout({
       setSelectedRoomNumber('');
       onBookSuccess?.();
     } catch (err: any) {
-      alert(err.message);
+      setErrorMsg(err.message);
       onError?.(err);
+      onBookSuccess?.(); // reload so the room that was just taken turns grey
     } finally {
       setSubmitting(false);
     }
@@ -410,44 +478,7 @@ export default function RoomLayout({
             <div className="rl-hallway">
               {/* Row 1: Rooms (First half) */}
               <div className="rl-rooms-row">
-                {roomsList.slice(0, Math.ceil(roomsList.length / 2)).map(room => {
-                  const isSelected = selectedRoomNumber === room.number;
-                  let cardClass = 'rl-room';
-                  if (isSelected) {
-                    cardClass += ' rl-room--selected';
-                  } else if (room.status === 'booked' && room.paymentMode) {
-                    cardClass += ` rl-room--${room.paymentMode}`; // cash | gpay | card
-                  } else if (room.status === 'maintenance') {
-                    cardClass += ' rl-room--maintenance';
-                  } else {
-                    cardClass += ' rl-room--available';
-                  }
-
-                  return (
-                    <div
-                      key={room.number}
-                      className={cardClass}
-                      onClick={() => setSelectedRoomNumber(room.number)}
-                    >
-                      <div className="rl-room__slot" />
-                      <div className="rl-room__top">
-                        <span className="rl-room__number">{room.number}</span>
-                        {room.bookingChannel === 'website' && <span className="rl-room__badge">🌐</span>}
-                        {room.bookingChannel === 'in_person' && <span className="rl-room__badge">👤</span>}
-                      </div>
-
-                      <div className="rl-room__status-text">
-                        {isSelected ? 'SELECTED' : room.sourceText}
-                      </div>
-
-                      {room.guestName && !isSelected && (
-                        <div style={{ fontSize: '11px', color: '#1a1816', fontWeight: 600, marginTop: '2px' }}>
-                          {room.guestName}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
+                {roomsList.slice(0, Math.ceil(roomsList.length / 2)).map(renderRoom)}
               </div>
 
               {/* Corridor Middle Divider */}
@@ -455,44 +486,7 @@ export default function RoomLayout({
 
               {/* Row 2: Rooms (Second half) */}
               <div className="rl-rooms-row">
-                {roomsList.slice(Math.ceil(roomsList.length / 2)).map(room => {
-                  const isSelected = selectedRoomNumber === room.number;
-                  let cardClass = 'rl-room';
-                  if (isSelected) {
-                    cardClass += ' rl-room--selected';
-                  } else if (room.status === 'booked' && room.paymentMode) {
-                    cardClass += ` rl-room--${room.paymentMode}`; // cash | gpay | card
-                  } else if (room.status === 'maintenance') {
-                    cardClass += ' rl-room--maintenance';
-                  } else {
-                    cardClass += ' rl-room--available';
-                  }
-
-                  return (
-                    <div
-                      key={room.number}
-                      className={cardClass}
-                      onClick={() => setSelectedRoomNumber(room.number)}
-                    >
-                      <div className="rl-room__slot" />
-                      <div className="rl-room__top">
-                        <span className="rl-room__number">{room.number}</span>
-                        {room.bookingChannel === 'website' && <span className="rl-room__badge">🌐</span>}
-                        {room.bookingChannel === 'in_person' && <span className="rl-room__badge">👤</span>}
-                      </div>
-
-                      <div className="rl-room__status-text">
-                        {isSelected ? 'SELECTED' : room.sourceText}
-                      </div>
-
-                      {room.guestName && !isSelected && (
-                        <div style={{ fontSize: '11px', color: '#1a1816', fontWeight: 600, marginTop: '2px' }}>
-                          {room.guestName}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
+                {roomsList.slice(Math.ceil(roomsList.length / 2)).map(renderRoom)}
               </div>
             </div>
           </div>
@@ -639,6 +633,9 @@ export default function RoomLayout({
             </div>
           </div>
 
+          {errorMsg && (
+            <div role="alert" style={{ color: '#b3261e', fontSize: '13px', fontWeight: 600 }}>{errorMsg}</div>
+          )}
           {feedbackMsg && (
             <div style={{ color: '#188038', fontSize: '13px', fontWeight: 600 }}>{feedbackMsg}</div>
           )}

@@ -427,6 +427,26 @@
   color: #8a8279;
 }
 
+/* Already booked for the dates in the front-desk form: grey and not selectable */
+.rl-room--unavailable {
+  background: #e9e7e4;
+  border-color: #c4c0bb;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+.rl-room--unavailable:hover {
+  transform: none;
+  border-color: #c4c0bb;
+  box-shadow: none;
+}
+.rl-room--unavailable .rl-room__number,
+.rl-room--unavailable .rl-room__status-text {
+  color: #7d7770;
+}
+.rl-room--unavailable .rl-room__slot {
+  background: #b9b4ae;
+}
+
 /* Legend bar below canvas */
 .rl-legend {
   display: flex;

@@ -381,6 +381,7 @@ function Bookings({ bookings, onStatus, onDelete }) {
                   <td>
                     {b.location}
                     {b.roomName && <div className="adm-muted">{b.roomName}{b.rooms > 1 ? ` × ${b.rooms}` : ''}{b.floorName ? ` · ${b.floorName}` : ''}</div>}
+                    {b.status === 'confirmed' && b.roomNumbers?.length > 0 && <div><strong>Room {b.roomNumbers.join(', ')}</strong></div>}
                   </td>
                   <td className="adm-nowrap">
                     {day(b.arrival)} → {day(b.departure)}

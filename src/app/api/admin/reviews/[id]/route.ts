@@ -8,7 +8,7 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
   }
   const { id } = await params;
   const store = getStore();
-  if (!store.reviews.remove(id)) {
+  if (!(await store.reviews.remove(id))) {
     return NextResponse.json({ error: 'Already deleted.' }, { status: 404 });
   }
   return new NextResponse(null, { status: 204 });
