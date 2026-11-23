@@ -156,7 +156,9 @@ export default function Reserve({ placeChosen = false, bare = false }) {
     gsap.timeline({ scrollTrigger: { trigger: '.rv', start: 'top 82%' } })
       .fromTo('.rv', { clipPath: 'inset(0% 50% 0% 50%)' }, { clipPath: 'inset(0% 0% 0% 0%)', duration: 1.6, ease: 'expo.inOut' })
       .from('.rv__photos', { scale: 1.2, duration: 2.2, ease: 'expo.out' }, 0.2)
-      .from('.rv__visual-head > *, .rv-folio', { opacity: 0, y: 24, duration: 1.2, stagger: 0.08, ease: 'expo.out' }, 0.8)
+      // The place name has its own CSS entrance (it replays when the place changes), so GSAP leaves it alone:
+      // two animations on it at once could leave it stuck invisible
+      .from('.rv__visual-head > :not(.rv__name), .rv-folio', { opacity: 0, y: 24, duration: 1.2, stagger: 0.08, ease: 'expo.out' }, 0.8)
       .from('.rv-pane, .rv-nav', { opacity: 0, x: 30, duration: 1.1, stagger: 0.08, ease: 'expo.out' }, 0.7);
     gsap.from('.reserve__glow', {
       opacity: 0, scale: 0.7, ease: 'none',

@@ -8,6 +8,7 @@ import { Stars } from '../components/Stars';
 import RoomLayout from './RoomLayout';
 import Insights from './Insights';
 import { AdminContext, scopeFor, useAdminVenues } from './scope';
+import { useBookingAlerts } from './alerts';
 import './admin.css';
 
 /*
@@ -134,6 +135,9 @@ function Dashboard({ user, onSignedOut }) {
 
   useEffect(() => { refresh(); }, [refresh]);
 
+  // Chime + pop-up when a new website booking arrives while the panel is open
+  const alerts = useBookingAlerts({ bookings, setBookings, onError: guard, placeName });
+
   const signOut = async () => {
     await api('/admin/logout', { method: 'POST' }).catch(() => {});
     onSignedOut();
@@ -220,6 +224,14 @@ function Dashboard({ user, onSignedOut }) {
         </nav>
         <div className="adm-top__end">
           <button className="adm-btn" onClick={refresh} disabled={loading}>{loading ? 'Refreshing…' : 'Refresh'}</button>
+          <button
+            className={`adm-btn adm-bell${alerts.soundOn ? ' is-on' : ''}`}
+            onClick={alerts.toggleSound}
+            aria-pressed={alerts.soundOn}
+            title={alerts.soundOn ? 'A chime plays when a new booking arrives. Click to mute.' : 'Booking chime is muted. Click to turn it on.'}
+          >
+            {alerts.soundOn ? '🔔 Alerts on' : '🔕 Alerts off'}
+          </button>
           <a href="/" className="adm-btn" target="_blank" rel="noreferrer">View site</a>
           <span className="adm-who" title={`Signed in as ${user.username}`}>
             {user.place ? `${placeName(user.place)} admin` : 'Superadmin'}
@@ -229,6 +241,9 @@ function Dashboard({ user, onSignedOut }) {
       </header>
 
       <main className="adm-main">
+        {alerts.soundOn && !alerts.soundReady && (
+          <p className="adm-hint">🔔 Click anywhere on this page once to turn on the new-booking chime.</p>
+        )}
         {error && <p className="adm-error" role="alert">{error}</p>}
         {!ready ? (
           !error && <p className="adm-muted">Loading…</p>
@@ -246,6 +261,28 @@ function Dashboard({ user, onSignedOut }) {
           </>
         )}
       </main>
+
+      {/* New-booking pop-ups (newest on top) */}
+      {alerts.toasts.length > 0 && (
+        <div className="adm-toasts" role="status" aria-live="polite">
+          {alerts.toasts.map(b => (
+            <div className="adm-toast" key={b.id}>
+              <div className="adm-toast__head">
+                <b>🛎️ New booking — {placeName(b.place)}</b>
+                <button className="adm-toast__x" onClick={() => alerts.dismiss(b.id)} aria-label="Dismiss">×</button>
+              </div>
+              <div>{b.name} · <a href={`tel:${(b.phone || '').replace(/[^\d+]/g, '')}`}>{b.phone}</a></div>
+              <div className="adm-muted">
+                {b.roomName}{b.rooms > 1 ? ` × ${b.rooms}` : ''} · {day(b.arrival)} → {day(b.departure)} · {b.guests} guest{b.guests === 1 ? '' : 's'}
+              </div>
+              <Link href="/admin/bookings" className="adm-toast__go" onClick={() => alerts.dismiss(b.id)}>Open bookings →</Link>
+            </div>
+          ))}
+          {alerts.toasts.length > 1 && (
+            <button className="adm-btn adm-toasts__clear" onClick={alerts.dismissAll}>Dismiss all</button>
+          )}
+        </div>
+      )}
     </div>
   );
 }
